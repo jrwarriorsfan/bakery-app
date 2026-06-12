@@ -38,9 +38,6 @@ export default function SweetSchedule() {
     status: "New",
   });
   const [form, setForm] = useState(blankForm());
-  const [pasteText, setPasteText] = useState("");
-  const [parsing, setParsing] = useState(false);
-  const [parseError, setParseError] = useState("");
   const [staged, setStaged] = useState([]); // multiple orders found in one text
 
   // load once
@@ -449,29 +446,6 @@ export default function SweetSchedule() {
         {/* ADD / EDIT FORM */}
         <div className="ss-card ss-form" id="ss-form">
           <h2>{editingId ? "Edit order" : "New order"}</h2>
-          {!editingId && (
-            <div className="ss-paste">
-              <label>✨ Paste a customer's text</label>
-              <textarea
-                value={pasteText}
-                onChange={(e) => setPasteText(e.target.value)}
-                placeholder="“Hi! Could I get 2 dozen choc chip cookies for next Sat? It’s for my son’s party — Maria 555-0192”"
-              />
-              <div className="ss-paste-row">
-                <button
-                  className="ss-btn-paste"
-                  onClick={parseFromText}
-                  disabled={parsing || !pasteText.trim()}
-                >
-                  {parsing ? "Reading…" : "Fill from text"}
-                </button>
-                <span className="ss-paste-hint">
-                  Drops it into the fields below — check it, then add.
-                </span>
-              </div>
-              {parseError && <div className="ss-paste-err">{parseError}</div>}
-            </div>
-          )}
           <div className="ss-grid">
             <div className="ss-field">
               <label>Customer</label>
