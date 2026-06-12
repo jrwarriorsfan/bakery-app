@@ -15,9 +15,6 @@ const fmtShort = (s) =>
   parseKey(s).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
 const STATUSES = ["New", "Confirmed", "Baking", "Done"];
-
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-
 const DEFAULT_SETTINGS = { dailyCapacity: 3, bakerName: "" };
 
 // ---- component -----------------------------------------------------------
@@ -27,10 +24,12 @@ export default function SweetSchedule() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [customers, setCustomers] = useState([]);
 
   const blankForm = () => ({
     customer: "",
     contact: "",
+    customer_id: null,
     item: "",
     qty: 1,
     dueDate: todayStr(),
@@ -38,9 +37,9 @@ export default function SweetSchedule() {
     status: "New",
   });
   const [form, setForm] = useState(blankForm());
-  const [staged, setStaged] = useState([]); // multiple orders found in one text
+  const [staged, setStaged] = useState([]);
 
-  // load once
+  // load orders
   useEffect(() => {
     (async () => {
       try {
@@ -69,7 +68,14 @@ export default function SweetSchedule() {
     })()
   }, [])
 
-  // save on change (after initial load)
+  // load customers
+  // load customers
+useEffect(() => {
+  supabase.from('customers').select('*').order('name').then(({ data, error }) => {
+    console.log('customers:', JSON.stringify(data), 'error:', JSON.stringify(error))
+    if (data) setCustomers(data)
+  })
+}, [])
 
   const activeCountForDate = (date, excludeId = null) =>
     orders.filter((o) => o.dueDate === date && o.status !== "Done" && o.id !== excludeId).length;
@@ -81,96 +87,18 @@ export default function SweetSchedule() {
     return { level: "open", label: `${count}/${cap} — open` };
   };
 
-  // live warning for the date currently in the form
   const formCount = activeCountForDate(form.dueDate, editingId);
   const formCap = capInfo(formCount);
 
-  // read a raw customer text into the form fields using Claude
-  const parseFromText = async () => {
-    if (!pasteText.trim()) return;
-    setParsing(true);
-    setParseError("");
-    try {
-      const now = new Date();
-      const sys =
-        `You extract bakery order details from a customer's text message. ` +
-        `Today is ${now.toLocaleDateString("en-US", { weekday: "long" })}, ${todayStr()}. ` +
-        `A single text may contain MORE THAN ONE order. Respond with ONLY a JSON array — no markdown, no backticks, no commentary — ` +
-        `containing one object per distinct order. Each object has these exact keys: ` +
-        `"customer" (their name, or ""), "contact" (phone number if present, or ""), ` +
-        `"item" (what they want to order), "qty" (a number; use 1 if unclear), ` +
-        `"dueDate" (YYYY-MM-DD; resolve relative dates like "next Saturday" or "tomorrow" relative to today; use "" if no date is mentioned), ` +
-        `"notes" (flavor, allergies, pickup time, budget, occasion, or ""). ` +
-        `Split into separate objects when distinct items have different dates or are clearly separate orders; keep one object if it is really one order. ` +
-        `Use "" for anything unknown. Always return an array, even for a single order.`;
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1024,
-          system: sys,
-          messages: [{ role: "user", content: pasteText }],
-        }),
-      });
-      const data = await resp.json();
-      const raw = (data.content || [])
-        .map((b) => (b.type === "text" ? b.text : ""))
-        .join("")
-        .trim();
-      const clean = raw.replace(/```json/g, "").replace(/```/g, "").trim();
-      let arr = JSON.parse(clean);
-      if (!Array.isArray(arr)) arr = [arr];
-      const norm = arr
-        .filter((o) => o && (o.item || o.customer))
-        .map((o) => {
-          const validDate =
-            typeof o.dueDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.dueDate);
-          return {
-            customer: o.customer || "",
-            contact: o.contact || "",
-            item: o.item || "",
-            qty: Number(o.qty) > 0 ? Number(o.qty) : 1,
-            dueDate: validDate ? o.dueDate : todayStr(),
-            notes: o.notes || "",
-          };
-        });
-      if (norm.length === 0) {
-        setParseError("Couldn’t find an order in that — just fill in the fields below.");
-        return;
-      }
-      if (norm.length === 1) {
-        // single order → fill the form so she can tweak, then add
-        const o = norm[0];
-        setForm((f) => ({
-          ...f,
-          customer: o.customer || f.customer,
-          contact: o.contact || f.contact,
-          item: o.item || f.item,
-          qty: o.qty,
-          dueDate: o.dueDate,
-          notes: o.notes || f.notes,
-        }));
-      } else {
-        // multiple orders → staging area for review
-        setStaged(norm.map((o) => ({ ...o, id: uid() })));
-      }
-      setPasteText("");
-    } catch (e) {
-      setParseError("Couldn’t read that one automatically — just fill in the fields below.");
-    } finally {
-      setParsing(false);
-    }
-  };
-
   const submit = async () => {
-    if (!form.customer.trim() && !form.item.trim()) return
+    if (!form.item.trim()) return
     if (editingId) {
       const { error } = await supabase
         .from('orders')
         .update({
           customer_name: form.customer,
           contact: form.contact,
+          customer_id: form.customer_id || null,
           item: form.item,
           qty: form.qty,
           due_date: form.dueDate,
@@ -178,6 +106,7 @@ export default function SweetSchedule() {
           status: form.status,
         })
         .eq('id', editingId)
+      if (error) console.log('Supabase error:', JSON.stringify(error))
       if (!error) {
         setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...form } : o))
         setEditingId(null)
@@ -188,6 +117,7 @@ export default function SweetSchedule() {
         .insert({
           customer_name: form.customer,
           contact: form.contact,
+          customer_id: form.customer_id || null,
           item: form.item,
           qty: form.qty,
           due_date: form.dueDate,
@@ -196,6 +126,7 @@ export default function SweetSchedule() {
         })
         .select()
         .single()
+      if (error) console.log('Supabase error:', JSON.stringify(error))
       if (!error) {
         setOrders(prev => [...prev, {
           id: data.id,
@@ -216,15 +147,20 @@ export default function SweetSchedule() {
   const startEdit = (o) => {
     setEditingId(o.id);
     setForm({
-      customer: o.customer, contact: o.contact, item: o.item,
-      qty: o.qty, dueDate: o.dueDate, notes: o.notes, status: o.status,
+      customer: o.customer,
+      contact: o.contact,
+      customer_id: o.customer_id || null,
+      item: o.item,
+      qty: o.qty,
+      dueDate: o.dueDate,
+      notes: o.notes,
+      status: o.status,
     });
     document.getElementById("ss-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const cancelEdit = () => { setEditingId(null); setForm(blankForm()); };
 
-  // projected orders on a date if all staged ones were added (existing active + staged on that day)
   const stagedDayLoad = (date) =>
     activeCountForDate(date) + staged.filter((s) => s.dueDate === date).length;
 
@@ -237,36 +173,24 @@ export default function SweetSchedule() {
       ...staged.map((s, i) => ({
         customer: s.customer, contact: s.contact, item: s.item,
         qty: s.qty, dueDate: s.dueDate, notes: s.notes,
-        status: "New", id: uid(), createdAt: Date.now() + i,
+        status: "New", id: Date.now().toString(36) + i, createdAt: Date.now() + i,
       })),
     ]);
     setStaged([]);
   };
 
   const remove = async (id) => {
-  const { error } = await supabase
-    .from('orders')
-    .delete()
-    .eq('id', id)
-  if (!error) {
-    setOrders(prev => prev.filter(o => o.id !== id))
+    const { error } = await supabase.from('orders').delete().eq('id', id)
+    if (!error) setOrders(prev => prev.filter(o => o.id !== id))
   }
-}
-  const cycleStatus = async (id) => {
-  const order = orders.find(o => o.id === id)
-  const nextStatus = STATUSES[(STATUSES.indexOf(order.status) + 1) % STATUSES.length]
-  const { error } = await supabase
-    .from('orders')
-    .update({ status: nextStatus })
-    .eq('id', id)
-  if (!error) {
-    setOrders(prev =>
-      prev.map(o => o.id === id ? { ...o, status: nextStatus } : o)
-    )
-  }
-}
 
-  // group + sort
+  const cycleStatus = async (id) => {
+    const order = orders.find(o => o.id === id)
+    const nextStatus = STATUSES[(STATUSES.indexOf(order.status) + 1) % STATUSES.length]
+    const { error } = await supabase.from('orders').update({ status: nextStatus }).eq('id', id)
+    if (!error) setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o))
+  }
+
   const grouped = useMemo(() => {
     const map = {};
     orders.forEach((o) => {
@@ -307,32 +231,17 @@ export default function SweetSchedule() {
           padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;
           font-family:inherit;white-space:nowrap;}
         .ss-gear:hover{color:var(--ink);border-color:var(--terra);}
-
         .ss-card{background:var(--card);border:1px solid var(--line);border-radius:18px;
           box-shadow:0 8px 24px -16px var(--shadow);}
         .ss-form{padding:18px;margin-bottom:26px;}
         .ss-form h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin:0 0 14px;}
-        .ss-paste{background:#FBEEE1;border:1px dashed var(--terra);border-radius:13px;padding:13px 14px;margin-bottom:18px;}
-        .ss-paste > label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);margin-bottom:8px;}
-        .ss-paste textarea{width:100%;box-sizing:border-box;font-family:inherit;font-size:14px;color:var(--ink);
-          background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;resize:vertical;min-height:58px;}
-        .ss-paste textarea:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
-        .ss-paste-row{display:flex;align-items:center;gap:11px;margin-top:9px;flex-wrap:wrap;}
-        .ss-btn-paste{background:var(--terra);color:#fff;border:none;border-radius:10px;padding:9px 16px;
-          font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;}
-        .ss-btn-paste:hover:not(:disabled){background:#b9572f;}
-        .ss-btn-paste:disabled{opacity:.45;cursor:default;}
-        .ss-paste-hint{font-size:12px;color:var(--ink-soft);}
-        .ss-paste-err{margin-top:8px;font-size:12.5px;font-weight:600;color:var(--berry);}
         .ss-stage{padding:0;margin-bottom:26px;overflow:hidden;}
         .ss-stage-head{padding:13px 16px;font-weight:600;font-size:14px;background:#FBEEE1;
           color:var(--ink);border-bottom:1px solid var(--line);}
         .ss-stage-row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-top:1px solid var(--line);}
-        .ss-stage-row:first-of-type{border-top:none;}
         .ss-stage-date{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap;}
         .ss-stage-date input{font-family:inherit;font-size:13px;color:var(--ink);background:#fff;
           border:1px solid var(--line);border-radius:9px;padding:6px 9px;outline:none;}
-        .ss-stage-date input:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
         .ss-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
         .ss-field{display:flex;flex-direction:column;gap:5px;}
         .ss-field.full{grid-column:1 / -1;}
@@ -342,21 +251,18 @@ export default function SweetSchedule() {
           border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none;}
         .ss-field input:focus,.ss-field textarea:focus,.ss-field select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
         .ss-field textarea{resize:vertical;min-height:46px;}
-
         .ss-warn{margin:12px 0 4px;border-radius:11px;padding:9px 12px;font-size:13px;font-weight:600;
           display:flex;align-items:center;gap:8px;}
         .ss-dot{width:9px;height:9px;border-radius:50%;flex:none;}
         .lv-open{background:#EEF4E7;color:#46612F;} .lv-open .ss-dot{background:var(--sage);}
         .lv-filling{background:#FCF0D9;color:#8A5B12;} .lv-filling .ss-dot{background:var(--amber);}
         .lv-full{background:#FBE6E6;color:#8E2433;} .lv-full .ss-dot{background:var(--berry);}
-
         .ss-actions{display:flex;gap:10px;margin-top:14px;}
         .ss-btn{font-family:inherit;font-weight:700;font-size:14px;border-radius:11px;padding:11px 18px;cursor:pointer;border:none;}
         .ss-btn-primary{background:var(--terra);color:#fff;box-shadow:0 6px 16px -8px rgba(200,100,60,.8);}
         .ss-btn-primary:hover{background:#b9572f;}
         .ss-btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
         .ss-btn-ghost:hover{color:var(--ink);}
-
         .ss-day{margin-bottom:18px;}
         .ss-day-head{display:flex;align-items:center;gap:10px;margin:0 4px 8px;}
         .ss-day-name{font-family:'Fraunces',serif;font-weight:600;font-size:17px;}
@@ -365,7 +271,6 @@ export default function SweetSchedule() {
         .ss-day-name .tag.past{background:var(--berry);}
         .ss-pill{margin-left:auto;font-size:12px;font-weight:700;padding:4px 11px;border-radius:50px;
           display:inline-flex;align-items:center;gap:6px;}
-
         .ss-order{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-top:1px solid var(--line);}
         .ss-order:first-child{border-top:none;}
         .ss-order .qty{font-family:'Fraunces',serif;font-weight:600;font-size:15px;
@@ -382,10 +287,8 @@ export default function SweetSchedule() {
         .ss-icon{border:none;background:transparent;cursor:pointer;color:var(--ink-soft);font-size:15px;padding:4px 6px;border-radius:8px;font-family:inherit;}
         .ss-icon:hover{background:#F1E6D6;color:var(--ink);}
         .done .item,.done .who{text-decoration:line-through;opacity:.55;}
-
         .ss-empty{text-align:center;color:var(--ink-soft);padding:40px 20px;}
         .ss-empty .big{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--ink);margin-bottom:6px;}
-
         .ss-settings{padding:18px;margin-bottom:26px;border-style:dashed;}
         .ss-settings .row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
         .ss-settings input{width:64px;}
@@ -449,9 +352,19 @@ export default function SweetSchedule() {
           <div className="ss-grid">
             <div className="ss-field">
               <label>Customer</label>
-              <input value={form.customer}
-                onChange={(e) => setForm({ ...form, customer: e.target.value })}
-                placeholder="Aunt Rosa" />
+              <select
+                value={form.customer_id || ''}
+                onChange={(e) => {
+                  const id = e.target.value
+                  const found = customers.find(c => c.id === id)
+                  setForm(f => ({ ...f, customer_id: id || null, customer: found?.name || '' }))
+                }}
+              >
+                <option value=''>Select a customer...</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
             <div className="ss-field">
               <label>Phone (optional)</label>
@@ -546,7 +459,7 @@ export default function SweetSchedule() {
         ) : grouped.length === 0 ? (
           <div className="ss-card ss-empty">
             <div className="big">No orders yet</div>
-            <div>Add the first one above and it’ll show up here, sorted by date.</div>
+            <div>Add the first one above and it'll show up here, sorted by date.</div>
           </div>
         ) : (
           grouped.map(({ date, items }) => {
