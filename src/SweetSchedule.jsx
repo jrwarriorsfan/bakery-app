@@ -25,6 +25,9 @@ export default function SweetSchedule() {
   const [editingId, setEditingId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [customers, setCustomers] = useState([]);
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const [quickName, setQuickName] = useState('')
+  const [search, setSearch] = useState('')
 
   const blankForm = () => ({
     customer: "",
@@ -35,6 +38,7 @@ export default function SweetSchedule() {
     dueDate: todayStr(),
     notes: "",
     status: "New",
+    paid: false,
   });
   const [form, setForm] = useState(blankForm());
   const [staged, setStaged] = useState([]);
@@ -57,6 +61,7 @@ export default function SweetSchedule() {
           dueDate: o.due_date,
           notes: o.notes,
           status: o.status,
+          paid: o.paid,
           createdAt: new Date(o.created_at).getTime(),
         }))
         setOrders(mapped)
@@ -67,6 +72,15 @@ export default function SweetSchedule() {
       }
     })()
   }, [])
+  
+  useEffect(() => {
+  (async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data } = await supabase.from('settings').select('*').eq('user_id', user.id).single()
+    if (data) setSettings({ bakerName: data.baker_name || '', dailyCapacity: data.daily_capacity || 3 })
+  })()
+}, [])
 
   // load customers
   // load customers
@@ -104,6 +118,7 @@ useEffect(() => {
           due_date: form.dueDate,
           notes: form.notes,
           status: form.status,
+          paid: form.paid || false,
         })
         .eq('id', editingId)
       if (error) console.log('Supabase error:', JSON.stringify(error))
@@ -123,6 +138,7 @@ useEffect(() => {
           due_date: form.dueDate,
           notes: form.notes,
           status: form.status || 'New',
+          paid: form.paid || false,
         })
         .select()
         .single()
@@ -190,22 +206,28 @@ useEffect(() => {
     const { error } = await supabase.from('orders').update({ status: nextStatus }).eq('id', id)
     if (!error) setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o))
   }
-
+  const togglePaid = async (id) => {
+    const order = orders.find(o => o.id === id)
+    const { error } = await supabase.from('orders').update({ paid: !order.paid }).eq('id', id)
+    if (!error) setOrders(prev => prev.map(o => o.id === id ? { ...o, paid: !o.paid } : o))
+  }
   const grouped = useMemo(() => {
     const map = {};
-    orders.forEach((o) => {
-      (map[o.dueDate] = map[o.dueDate] || []).push(o);
-    });
+    orders
+      .filter(o => !search || o.customer?.toLowerCase().includes(search.toLowerCase()) || o.item?.toLowerCase().includes(search.toLowerCase()))
+      .forEach((o) => {
+        (map[o.dueDate] = map[o.dueDate] || []).push(o);
+      });
     return Object.keys(map)
       .sort()
       .map((date) => ({
         date,
         items: map[date].sort((a, b) => a.createdAt - b.createdAt),
       }));
-  }, [orders]);
+  }, [orders, search]);
 
   const today = todayStr();
-
+  const tomorrow = toKey(new Date(new Date().setDate(new Date().getDate() + 1)));
   return (
     <div className="ss-root">
       <style>{`
@@ -311,6 +333,12 @@ useEffect(() => {
         <p className="ss-sub">
           Add every order here before saying yes — each day shows how full it already is.
         </p>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by customer or item..."
+          style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: 15, border: '1px solid var(--line)', borderRadius: 12, padding: '10px 14px', outline: 'none', background: 'var(--card)', color: 'var(--ink)', marginBottom: 18 }}
+        />
 
         {showSettings && (
           <div className="ss-card ss-settings">
@@ -321,7 +349,15 @@ useEffect(() => {
                   border: "1px solid var(--line)", borderRadius: 10 }}
                 value={settings.bakerName}
                 placeholder="optional"
-                onChange={(e) => setSettings({ ...settings, bakerName: e.target.value })}
+                onChange={async (e) => {
+                  const bakerName = e.target.value
+                  setSettings({ ...settings, bakerName })
+                  const { data: { user } } = await supabase.auth.getUser()
+                  const { error } = await supabase.from('settings').upsert(
+                    { user_id: user.id, baker_name: bakerName, daily_capacity: settings.dailyCapacity },
+                    { onConflict: 'user_id' }
+                  )
+                }}
               />
             </div>
             <div className="row">
@@ -331,8 +367,15 @@ useEffect(() => {
                 style={{ fontFamily: "inherit", fontSize: 15, padding: "8px 10px",
                   border: "1px solid var(--line)", borderRadius: 10 }}
                 value={settings.dailyCapacity}
-                onChange={(e) =>
-                  setSettings({ ...settings, dailyCapacity: Math.max(1, Number(e.target.value) || 1) })}
+                onChange={async (e) => {
+                  const dailyCapacity = Math.max(1, Number(e.target.value) || 1)
+                  setSettings({ ...settings, dailyCapacity })
+                  const { data: { user } } = await supabase.auth.getUser()
+                  await supabase.from('settings').upsert(
+                    { user_id: user.id, baker_name: settings.bakerName, daily_capacity: dailyCapacity },
+                    { onConflict: 'user_id' }
+                  )
+                }}
               />
             </div>
             <button
@@ -355,6 +398,10 @@ useEffect(() => {
               <select
                 value={form.customer_id || ''}
                 onChange={(e) => {
+                  if (e.target.value === '__new__') {
+                    setShowQuickAdd(true)
+                    return
+                  }
                   const id = e.target.value
                   const found = customers.find(c => c.id === id)
                   setForm(f => ({ ...f, customer_id: id || null, customer: found?.name || '' }))
@@ -364,8 +411,44 @@ useEffect(() => {
                 {customers.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
+                <option value='__new__'>+ Add new customer</option>
               </select>
             </div>
+
+            {showQuickAdd && (
+              <div className="ss-field full" style={{ gridColumn: '1 / -1', background: '#FBF4E9', border: '1px solid #E7D9C5', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label>New customer name</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={quickName}
+                    onChange={e => setQuickName(e.target.value)}
+                    placeholder="Maria"
+                    style={{ flex: 1, fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none' }}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!quickName.trim()) return
+                      const { data, error } = await supabase.from('customers').insert({ name: quickName }).select().single()
+                      if (!error) {
+                        setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+                        setForm(f => ({ ...f, customer_id: data.id, customer: data.name }))
+                        setQuickName('')
+                        setShowQuickAdd(false)
+                      }
+                    }}
+                    style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => { setShowQuickAdd(false); setQuickName('') }}
+                    style={{ background: 'transparent', border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 12px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: '#7A6452' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="ss-field">
               <label>Phone (optional)</label>
               <input value={form.contact}
@@ -467,12 +550,14 @@ useEffect(() => {
             const cap = capInfo(active);
             const isPast = date < today;
             const isToday = date === today;
+            const isTomorrow = date === tomorrow;
             return (
               <div className="ss-day" key={date}>
                 <div className="ss-day-head">
                   <span className="ss-day-name">
                     {fmtLong(date)}
                     {isToday && <span className="tag">Today</span>}
+                    {date === tomorrow && <span className="tag" style={{ background: '#D9982E' }}>Tomorrow</span>}
                     {isPast && active > 0 && <span className="tag past">Past due</span>}
                   </span>
                   <span className={`ss-pill lv-${cap.level}`}>
@@ -496,6 +581,14 @@ useEffect(() => {
                           {o.status}
                         </button>
                         <button className="ss-icon" onClick={() => startEdit(o)} title="Edit">✎</button>
+                        <button
+                          className={`ss-status`}
+                          style={{ background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : '#7A6452' }}
+                          onClick={() => togglePaid(o.id)}
+                          title="Toggle paid"
+                        >
+                          {o.paid ? 'Paid' : 'Unpaid'}
+                        </button>
                         <button className="ss-icon" onClick={() => remove(o.id)} title="Delete">✕</button>
                       </div>
                     </div>

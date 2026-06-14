@@ -138,7 +138,9 @@ export default function Customers() {
                       <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #E7D9C5' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 600, fontSize: 14 }}>{o.qty}× {o.item}</div>
-                          <div style={{ fontSize: 13, color: '#7A6452' }}>{o.due_date}</div>
+                          <div style={{ fontSize: 13, color: '#7A6452' }}>
+                            {new Date(o.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
                           {o.notes && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>{o.notes}</div>}
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 50, background: statusColors[o.status], color: statusText[o.status] }}>{o.status}</span>

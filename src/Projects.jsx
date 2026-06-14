@@ -96,8 +96,7 @@ export default function Projects() {
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .photo-card { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; cursor: pointer; background: #F4E9D8; }
         .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .photo-card .overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(51,36,26,0.7) 0%, transparent 50%); opacity: 0; transition: opacity 0.2s; display: flex; align-items: flex-end; padding: 8px; }
-        .photo-card:hover .overlay { opacity: 1; }
+        .photo-card .overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(51,36,26,0.7) 0%, transparent 60%); opacity: 1; display: flex; align-items: flex-end; padding: 8px; }
         .photo-card .overlay span { color: #fff; font-size: 12px; font-weight: 600; line-height: 1.3; }
         .no-photo { display: flex; align-items: center; justify-content: center; font-size: 28px; }
         .modal-bg { position: fixed; inset: 0; background: rgba(51,36,26,0.6); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
