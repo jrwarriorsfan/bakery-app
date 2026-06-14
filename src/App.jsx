@@ -4,6 +4,7 @@ import Login from './Login.jsx'
 import SweetSchedule from './SweetSchedule.jsx'
 import Customers from './Customers.jsx'
 import Recipes from './Recipes.jsx'
+import Projects from './Projects.jsx'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -30,6 +31,7 @@ function App() {
       {tab === 'orders' && <SweetSchedule />}
       {tab === 'customers' && <Customers />}
       {tab === 'recipes' && <Recipes />}
+      {tab === 'projects' && <Projects />}
 
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFDF8', borderTop: '1px solid #E7D9C5', display: 'flex', zIndex: 100 }}>
         <button onClick={() => setTab('orders')} style={{ flex: 1, padding: '14px 0', fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', background: 'transparent', color: tab === 'orders' ? '#C8643C' : '#7A6452', borderTop: tab === 'orders' ? '2px solid #C8643C' : '2px solid transparent' }}>
@@ -40,6 +42,9 @@ function App() {
         </button>
         <button onClick={() => setTab('recipes')} style={{ flex: 1, padding: '14px 0', fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', background: 'transparent', color: tab === 'recipes' ? '#C8643C' : '#7A6452', borderTop: tab === 'recipes' ? '2px solid #C8643C' : '2px solid transparent' }}>
           Recipes
+        </button>
+        <button onClick={() => setTab('projects')} style={{ flex: 1, padding: '14px 0', fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', background: 'transparent', color: tab === 'projects' ? '#C8643C' : '#7A6452', borderTop: tab === 'projects' ? '2px solid #C8643C' : '2px solid transparent' }}>
+          Projects
         </button>
       </div>
     </div>
