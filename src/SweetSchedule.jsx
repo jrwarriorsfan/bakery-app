@@ -29,11 +29,13 @@ export default function SweetSchedule() {
   const [quickName, setQuickName] = useState('')
   const [search, setSearch] = useState('')
   const [toast, setToast] = useState('')
+  const [recipes, setRecipes] = useState([])
 
   const blankForm = () => ({
     customer: "",
     contact: "",
     customer_id: null,
+    recipe_id: null,
     item: "",
     qty: 1,
     dueDate: todayStr(),
@@ -63,6 +65,7 @@ export default function SweetSchedule() {
           notes: o.notes,
           status: o.status,
           paid: o.paid,
+          recipe_id: o.recipe_id,
           createdAt: new Date(o.created_at).getTime(),
         }))
         setOrders(mapped)
@@ -89,6 +92,12 @@ useEffect(() => {
   supabase.from('customers').select('*').order('name').then(({ data, error }) => {
     console.log('customers:', JSON.stringify(data), 'error:', JSON.stringify(error))
     if (data) setCustomers(data)
+  })
+}, [])
+
+useEffect(() => {
+  supabase.from('recipes').select('*').order('name').then(({ data }) => {
+    if (data) setRecipes(data)
   })
 }, [])
 
@@ -120,6 +129,7 @@ useEffect(() => {
           notes: form.notes,
           status: form.status,
           paid: form.paid || false,
+          recipe_id: form.recipe_id || null,
         })
         .eq('id', editingId)
       if (error) console.log('Supabase error:', JSON.stringify(error))
@@ -425,6 +435,22 @@ useEffect(() => {
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
                 <option value='__new__'>+ Add new customer</option>
+              </select>
+            </div>
+            <div className="ss-field full">
+              <label>Recipe (optional)</label>
+              <select
+                value={form.recipe_id || ''}
+                onChange={(e) => {
+                  const id = e.target.value || null
+                  const found = recipes.find(r => r.id === id)
+                  setForm(f => ({ ...f, recipe_id: id, item: found?.name || f.item }))
+                }}
+              >
+                <option value=''>Custom / no recipe</option>
+                {recipes.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
               </select>
             </div>
 
