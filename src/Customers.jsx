@@ -137,7 +137,14 @@ export default function Customers() {
 
   return (
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
+        @keyframes popIn {
+          0% { opacity: 0; transform: scale(0.95); }
+          60% { transform: scale(1.02); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
         <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: 0 }}>Customers</h1>
@@ -195,7 +202,7 @@ export default function Customers() {
           {filtered.map(c => (
             <div key={c.id}>
               {/* customer card */}
-              <div onClick={() => selectCustomer(c)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === c.id ? c.color || '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === c.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div onClick={() => selectCustomer(c)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === c.id ? c.color || '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === c.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, animation: 'popIn 0.25s ease forwards' }}>
                 <div style={avatarStyle(c)}>{initials(c.name)}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>

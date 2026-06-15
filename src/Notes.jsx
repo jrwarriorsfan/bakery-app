@@ -57,9 +57,14 @@ export default function Notes() {
 
   return (
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
-
-      <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: '0 0 4px' }}>Notes</h1>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
+        @keyframes popIn {
+          0% { opacity: 0; transform: scale(0.95); }
+          60% { transform: scale(1.02); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
       <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Reminders, shopping lists, anything on your mind.</p>
 
       {/* input */}
@@ -89,7 +94,7 @@ export default function Notes() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {notes.map(n => (
-            <div key={n.id} style={{ background: n.pinned ? '#FEF3C7' : '#FFFDF8', border: `1px solid ${n.pinned ? '#D9982E' : '#E7D9C5'}`, borderRadius: 14, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div key={n.id} style={{ background: n.pinned ? '#FEF3C7' : '#FFFDF8', border: `1px solid ${n.pinned ? '#D9982E' : '#E7D9C5'}`, borderRadius: 14, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start', animation: 'popIn 0.25s ease forwards' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, color: '#33241A', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{n.content}</div>
                 <div style={{ fontSize: 12, color: '#7A6452', marginTop: 6 }}>{fmtDate(n.created_at)}</div>

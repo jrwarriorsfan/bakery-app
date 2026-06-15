@@ -29,12 +29,26 @@ function App() {
 
   return (
     <div style={{ paddingBottom: 64 }}>
-      {tab === 'home' && <Dashboard key={tab} onNavigate={setTab} />}
-      {tab === 'orders' && <SweetSchedule />}
-      {tab === 'customers' && <Customers />}
-      {tab === 'recipes' && <Recipes />}
-      {tab === 'projects' && <Projects />}
-      {tab === 'notes' && <Notes />}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+          0% { opacity: 0; transform: scale(0.95); }
+          60% { transform: scale(1.02); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .tab-content {
+          animation: fadeIn 0.2s ease forwards;
+        }
+      `}</style>
+      {tab === 'home' && <div className="tab-content"><Dashboard key={tab} onNavigate={setTab} /></div>}
+      {tab === 'orders' && <div className="tab-content"><SweetSchedule /></div>}
+      {tab === 'customers' && <div className="tab-content"><Customers /></div>}
+      {tab === 'recipes' && <div className="tab-content"><Recipes /></div>}
+      {tab === 'projects' && <div className="tab-content"><Projects /></div>}
+      {tab === 'notes' && <div className="tab-content"><Notes /></div>}
 
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFDF8', borderTop: '1px solid #E7D9C5', display: 'flex', zIndex: 100 }}>
         <button onClick={() => setTab('home')} style={{ flex: 1, padding: '14px 0', fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', background: 'transparent', color: tab === 'home' ? '#C8643C' : '#7A6452', borderTop: tab === 'home' ? '2px solid #C8643C' : '2px solid transparent' }}>

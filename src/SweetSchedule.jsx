@@ -378,6 +378,12 @@ useEffect(() => {
         .ss-clear{background:transparent;color:var(--berry);border:1px solid #EBC6CB;border-radius:11px;
           padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
         @media(max-width:520px){.ss-grid{grid-template-columns:1fr;}.ss-title{font-size:28px;}}
+        @keyframes popIn {
+          0% { opacity: 0; transform: scale(0.95); }
+          60% { transform: scale(1.02); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        .pop-in { animation: popIn 0.25s ease forwards; }
       `}</style>
 
       <div className="ss-wrap">
@@ -662,7 +668,7 @@ useEffect(() => {
                 </div>
                 <div className="ss-card">
                   {items.map((o) => (
-                    <div className={`ss-order ${o.status === "Done" ? "done" : ""}`} key={o.id}>
+                    <div className={`ss-order ${o.status === "Done" ? "done" : ""}`} key={o.id} style={{ animation: 'popIn 0.25s ease forwards' }}>
                       <div className="qty">{o.qty}×</div>
                       <div className="body">
                         <div className="item">{o.item || "—"}</div>
