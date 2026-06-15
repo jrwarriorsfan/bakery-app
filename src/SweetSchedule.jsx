@@ -457,8 +457,11 @@ useEffect(() => {
             </div>
             <button
               className="ss-clear"
-              onClick={() => {
-                if (confirm("Delete all orders? This can't be undone.")) setOrders([]);
+              onClick={async () => {
+                if (confirm("Delete all orders? This can't be undone.")) {
+                  const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+                  if (!error) setOrders([])
+                }
               }}
             >
               Clear all orders
