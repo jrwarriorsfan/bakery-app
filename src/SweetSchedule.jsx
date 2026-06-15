@@ -222,6 +222,51 @@ useEffect(() => {
     const { error } = await supabase.from('orders').update({ status: nextStatus }).eq('id', id)
     if (!error) setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o))
   }
+  const exportPDF = () => {
+  const doc = new jsPDF()
+  const today = todayStr()
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(20)
+  doc.text('Order List', 14, 20)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(11)
+  doc.text(`Generated ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`, 14, 28)
+
+  let y = 40
+
+  grouped.forEach(({ date, items }) => {
+    if (y > 260) { doc.addPage(); y = 20 }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13)
+    doc.text(fmtLong(date), 14, y)
+    y += 6
+
+    items.forEach(o => {
+      if (y > 270) { doc.addPage(); y = 20 }
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.text(`${o.qty}x ${o.item} — ${o.customer || 'Unknown'}`, 18, y)
+      y += 5
+      if (o.notes) {
+        doc.setFontSize(9)
+        doc.setTextColor(120, 100, 82)
+        doc.text(`  ${o.notes}`, 18, y)
+        doc.setTextColor(0, 0, 0)
+        y += 5
+      }
+      doc.setFontSize(10)
+      doc.text(`  ${o.status}${o.paid ? ' · Paid' : ' · Unpaid'}${o.price ? ` · $${Number(o.price).toFixed(2)}` : ''}`, 18, y)
+      y += 7
+    })
+
+    y += 4
+  })
+
+  doc.save(`orders-${today}.pdf`)
+}
   const togglePaid = async (id) => {
     const order = orders.find(o => o.id === id)
     const { error } = await supabase.from('orders').update({ paid: !order.paid }).eq('id', id)
