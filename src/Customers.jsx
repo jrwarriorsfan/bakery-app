@@ -1,52 +1,94 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+
+const COLORS = [
+  '#C8643C', '#B5394F', '#6F8C57', '#4A7FA5', '#8B5E9E',
+  '#D9982E', '#3D8C7A', '#C45B8A', '#5B7EC4', '#A06040'
+]
+
+const getColor = () => COLORS[Math.floor(Math.random() * COLORS.length)]
+
+const initials = (name) => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
+const fmtDate = (s) => {
+  if (!s) return ''
+  return new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const statusColors = { New: '#FBE6E6', Confirmed: '#E7EEF6', Baking: '#FCF0D9', Done: '#EEF4E7' }
+const statusText = { New: '#8E2433', Confirmed: '#2D4F77', Baking: '#8A5B12', Done: '#46612F' }
 
 export default function Customers() {
   const [customers, setCustomers] = useState([])
   const [selected, setSelected] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', phone: '', notes: '' })
   const [adding, setAdding] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [search, setSearch] = useState('')
+  const [form, setForm] = useState({ name: '', phone: '', notes: '', favorite_items: '' })
 
-  useEffect(() => {
-    loadCustomers()
-  }, [])
+  useEffect(() => { loadCustomers() }, [])
 
   const loadCustomers = async () => {
-    const { data, error } = await supabase
-      .from('customers')
-      .select('*')
-      .order('name', { ascending: true })
+    const { data, error } = await supabase.from('customers').select('*').order('name')
     if (!error) setCustomers(data)
     setLoading(false)
   }
 
   const loadOrders = async (customerId) => {
     const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('customer_id', customerId)
-      .order('due_date', { ascending: false })
+      .from('orders').select('*').eq('customer_id', customerId).order('due_date', { ascending: false })
     if (!error) setOrders(data)
   }
 
   const selectCustomer = (customer) => {
-    setSelected(customer)
-    loadOrders(customer.id)
+    if (selected?.id === customer.id) {
+      setSelected(null)
+      setOrders([])
+      setEditing(false)
+    } else {
+      setSelected(customer)
+      setEditing(false)
+      loadOrders(customer.id)
+    }
   }
 
   const addCustomer = async () => {
     if (!form.name.trim()) return
+    const color = getColor()
     const { data, error } = await supabase
       .from('customers')
-      .insert({ name: form.name, phone: form.phone, notes: form.notes })
-      .select()
-      .single()
+      .insert({ name: form.name, phone: form.phone, notes: form.notes, favorite_items: form.favorite_items, color })
+      .select().single()
     if (!error) {
       setCustomers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-      setForm({ name: '', phone: '', notes: '' })
+      setForm({ name: '', phone: '', notes: '', favorite_items: '' })
       setAdding(false)
+    }
+  }
+
+  const saveEdit = async () => {
+    if (!form.name.trim()) return
+    const { error } = await supabase
+      .from('customers')
+      .update({ name: form.name, phone: form.phone, notes: form.notes, favorite_items: form.favorite_items })
+      .eq('id', selected.id)
+    if (!error) {
+      const updated = { ...selected, ...form }
+      setCustomers(prev => prev.map(c => c.id === selected.id ? updated : c).sort((a, b) => a.name.localeCompare(b.name)))
+      setSelected(updated)
+      setEditing(false)
+    }
+  }
+
+  const toggleFavorite = async (customer) => {
+    const { error } = await supabase
+      .from('customers').update({ favorite: !customer.favorite }).eq('id', customer.id)
+    if (!error) {
+      const updated = { ...customer, favorite: !customer.favorite }
+      setCustomers(prev => prev.map(c => c.id === customer.id ? updated : c))
+      if (selected?.id === customer.id) setSelected(updated)
     }
   }
 
@@ -59,93 +101,167 @@ export default function Customers() {
     }
   }
 
-  const initials = (name) => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const favorites = customers.filter(c => c.favorite)
+  const filtered = customers.filter(c =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone?.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const statusColors = {
-    New: '#FBE6E6', Confirmed: '#E7EEF6', Baking: '#FCF0D9', Done: '#EEF4E7'
-  }
-  const statusText = {
-    New: '#8E2433', Confirmed: '#2D4F77', Baking: '#8A5B12', Done: '#46612F'
-  }
+  const avatarStyle = (c, size = 44) => ({
+    width: size, height: size, borderRadius: '50%',
+    background: c.color || '#C8643C',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontWeight: 700, fontSize: size * 0.33, color: '#fff', flexShrink: 0
+  })
+
+  const formFields = (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      {[
+        { label: 'Name', key: 'name', placeholder: 'Maria', full: true },
+        { label: 'Phone', key: 'phone', placeholder: '555-0192' },
+        { label: 'Favorite items', key: 'favorite_items', placeholder: 'chocolate chip cookies, tres leches...' },
+        { label: 'Notes', key: 'notes', placeholder: 'allergies, preferences...', full: true },
+      ].map(f => (
+        <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5, gridColumn: f.full ? '1 / -1' : 'auto' }}>
+          <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>{f.label}</label>
+          <input
+            value={form[f.key]}
+            onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+            placeholder={f.placeholder}
+            style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }}
+          />
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: 0 }}>
-          Customers
-        </h1>
-        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+        <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: 0 }}>Customers</h1>
+        <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
           {adding ? 'Cancel' : '+ Add customer'}
         </button>
       </div>
-      <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Tap a customer to see their order history.</p>
+      <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 18 }}>Tap a customer to see their profile and order history.</p>
 
+      {/* add form */}
       {adding && (
         <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: 18, marginBottom: 24 }}>
           <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 600, margin: '0 0 14px' }}>New customer</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Name</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Maria" style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Phone</label>
-              <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="555-0192" style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, gridColumn: '1 / -1' }}>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Notes</label>
-              <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="allergies, preferences..." style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }} />
-            </div>
-          </div>
+          {formFields}
           <button onClick={addCustomer} style={{ marginTop: 14, background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '11px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
             Save customer
           </button>
         </div>
       )}
 
+      {/* favorites row */}
+      {favorites.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 12 }}>Favorites</div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8, paddingTop: 4, paddingLeft: 4, paddingRight: 4 }}>
+            {favorites.map(c => (
+              <div key={c.id} onClick={() => selectCustomer(c)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', minWidth: 56 }}>
+                <div style={{ ...avatarStyle(c, 56), boxShadow: selected?.id === c.id ? `0 0 0 3px ${c.color || '#C8643C'}` : 'none' }}>
+                  {initials(c.name)}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#33241A', textAlign: 'center', maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name.split(' ')[0]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* search */}
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search customers..."
+        style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 12, padding: '10px 14px', outline: 'none', background: '#FFFDF8', color: '#33241A', marginBottom: 14 }}
+      />
+
       {loading ? (
         <p style={{ color: '#7A6452' }}>Loading...</p>
-      ) : customers.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '40px 20px', textAlign: 'center', color: '#7A6452' }}>
           <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 20, color: '#33241A', marginBottom: 6 }}>No customers yet</div>
           <div>Add your first customer above.</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {customers.map(c => (
+          {filtered.map(c => (
             <div key={c.id}>
-              <div onClick={() => selectCustomer(c)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === c.id ? '#C8643C' : '#E7D9C5'}`, borderRadius: 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#F4E9D8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: '#C8643C', flexShrink: 0 }}>
-                  {initials(c.name)}
-                </div>
+              {/* customer card */}
+              <div onClick={() => selectCustomer(c)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === c.id ? c.color || '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === c.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={avatarStyle(c)}>{initials(c.name)}</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 15, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {c.name}
+                    {c.favorite && <span style={{ fontSize: 14 }}>⭐</span>}
+                  </div>
                   {c.phone && <div style={{ fontSize: 13, color: '#7A6452' }}>{c.phone}</div>}
-                  {c.notes && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>{c.notes}</div>}
+                  {c.favorite_items && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>Loves: {c.favorite_items}</div>}
                 </div>
                 <button onClick={e => { e.stopPropagation(); deleteCustomer(c.id) }} style={{ background: 'transparent', border: 'none', color: '#7A6452', cursor: 'pointer', fontSize: 16, padding: '4px 8px', borderRadius: 8 }}>✕</button>
               </div>
 
+              {/* expanded detail */}
               {selected?.id === c.id && (
-                <div style={{ background: '#FBF4E9', border: '1px solid #E7D9C5', borderTop: 'none', borderRadius: '0 0 18px 18px', padding: '14px 16px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 10 }}>Order history</div>
-                  {orders.length === 0 ? (
-                    <div style={{ fontSize: 14, color: '#7A6452', fontStyle: 'italic' }}>No orders linked to this customer yet.</div>
-                  ) : (
-                    orders.map(o => (
-                      <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #E7D9C5' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>{o.qty}× {o.item}</div>
-                          <div style={{ fontSize: 13, color: '#7A6452' }}>
-                            {new Date(o.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </div>
-                          {o.notes && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>{o.notes}</div>}
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 50, background: statusColors[o.status], color: statusText[o.status] }}>{o.status}</span>
+                <div style={{ background: '#FBF4E9', border: `1px solid ${c.color || '#C8643C'}`, borderTop: 'none', borderRadius: '0 0 18px 18px', padding: '16px 16px 18px' }}>
+
+                  {editing ? (
+                    <>
+                      {formFields}
+                      <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                        <button onClick={saveEdit} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Save</button>
+                        <button onClick={() => setEditing(false)} style={{ background: 'transparent', border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: '#7A6452' }}>Cancel</button>
                       </div>
-                    ))
+                    </>
+                  ) : (
+                    <>
+                      {/* action buttons */}
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => { setEditing(true); setForm({ name: c.name, phone: c.phone || '', notes: c.notes || '', favorite_items: c.favorite_items || '' }) }}
+                          style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 9, padding: '7px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 12, cursor: 'pointer', color: '#33241A' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => toggleFavorite(c)}
+                          style={{ background: c.favorite ? '#FEF3C7' : '#FFFDF8', border: `1px solid ${c.favorite ? '#D9982E' : '#E7D9C5'}`, borderRadius: 9, padding: '7px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 12, cursor: 'pointer', color: c.favorite ? '#D9982E' : '#7A6452' }}
+                        >
+                          {c.favorite ? '⭐ Favorited' : '☆ Add to favorites'}
+                        </button>
+                      </div>
+
+                      {c.notes && (
+                        <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic', marginBottom: 12, padding: '10px 12px', background: '#FFFDF8', borderRadius: 10 }}>{c.notes}</div>
+                      )}
+
+                      {/* order history */}
+                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 8 }}>Order history</div>
+                      {orders.length === 0 ? (
+                        <div style={{ fontSize: 14, color: '#7A6452', fontStyle: 'italic' }}>No orders linked yet.</div>
+                      ) : (
+                        orders.map(o => (
+                          <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #E7D9C5' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{o.qty}× {o.item}</div>
+                              <div style={{ fontSize: 13, color: '#7A6452' }}>{fmtDate(o.due_date)}</div>
+                              {o.notes && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>{o.notes}</div>}
+                            </div>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 50, background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : '#7A6452' }}>{o.paid ? 'Paid' : 'Unpaid'}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 50, background: statusColors[o.status], color: statusText[o.status] }}>{o.status}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </>
                   )}
                 </div>
               )}
