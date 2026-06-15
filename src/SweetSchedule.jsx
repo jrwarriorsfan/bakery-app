@@ -42,6 +42,7 @@ export default function SweetSchedule() {
     notes: "",
     status: "New",
     paid: false,
+    price: "",
   });
   const [form, setForm] = useState(blankForm());
   const [staged, setStaged] = useState([]);
@@ -66,6 +67,7 @@ export default function SweetSchedule() {
           status: o.status,
           paid: o.paid,
           recipe_id: o.recipe_id,
+          price: o.price,
           createdAt: new Date(o.created_at).getTime(),
         }))
         setOrders(mapped)
@@ -130,6 +132,7 @@ useEffect(() => {
           status: form.status,
           paid: form.paid || false,
           recipe_id: form.recipe_id || null,
+          price: form.price ? Number(form.price) : null,
         })
         .eq('id', editingId)
       if (error) console.log('Supabase error:', JSON.stringify(error))
@@ -509,6 +512,15 @@ useEffect(() => {
               <label>Due date</label>
               <input type="date" value={form.dueDate}
                 onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+            </div>
+            <div className="ss-field">
+              <label>Price ($)</label>
+              <input
+                type="number"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                placeholder="0.00"
+              />
             </div>
             <div className="ss-field full">
               <label>Notes</label>

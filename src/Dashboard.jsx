@@ -44,6 +44,10 @@ export default function Dashboard({ onNavigate }) {
   const weekOrders = active.filter(o => o.due_date > today && o.due_date <= week)
   const unpaid = active.filter(o => !o.paid)
   const overdue = active.filter(o => o.due_date < today)
+  const thisMonth = new Date().toISOString().slice(0, 7)
+  const monthlyRevenue = orders
+    .filter(o => o.paid && o.price && o.due_date?.startsWith(thisMonth))
+    .reduce((sum, o) => sum + Number(o.price), 0)
 
   const statCard = (label, value, color, onClick) => (
     <div onClick={onClick} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 16, padding: '16px 18px', cursor: onClick ? 'pointer' : 'default', flex: 1 }}>
@@ -84,6 +88,7 @@ export default function Dashboard({ onNavigate }) {
         {statCard('Due today', todayOrders.length, todayOrders.length > 0 ? '#B5394F' : '#33241A', () => onNavigate('orders'))}
         {statCard('Unpaid', unpaid.length, unpaid.length > 0 ? '#D9982E' : '#33241A', () => onNavigate('orders'))}
         {statCard('Overdue', overdue.length, overdue.length > 0 ? '#B5394F' : '#6F8C57', () => onNavigate('orders'))}
+        {statCard(`Revenue this month`, `$${monthlyRevenue.toFixed(2)}`, '#6F8C57', () => onNavigate('orders'))}
       </div>
 
       {/* today */}
