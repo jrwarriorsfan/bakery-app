@@ -10,6 +10,8 @@ export default function Projects() {
   const [form, setForm] = useState({ item_name: '', customer_name: '', project_date: '', notes: '' })
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ item_name: '', customer_name: '', project_date: '', notes: '' })
   const fileRef = useRef()
 
   useEffect(() => {
@@ -83,6 +85,25 @@ export default function Projects() {
     setProjects(prev => prev.filter(p => p.id !== id))
     if (selected?.id === id) setSelected(null)
   }
+
+  const saveEdit = async () => {
+  if (!editForm.item_name.trim()) return
+  const { error } = await supabase
+    .from('projects')
+    .update({
+      item_name: editForm.item_name,
+      customer_name: editForm.customer_name,
+      project_date: editForm.project_date || null,
+      notes: editForm.notes,
+    })
+    .eq('id', selected.id)
+  if (!error) {
+    const updated = { ...selected, ...editForm }
+    setProjects(prev => prev.map(p => p.id === selected.id ? updated : p))
+    setSelected(updated)
+    setEditing(false)
+  }
+}
 
   const fmt = (date) => {
     if (!date) return ''
@@ -185,35 +206,66 @@ export default function Projects() {
       )}
 
             {selected && (
-          <div className="modal-bg" onClick={() => setSelected(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              {selected.photo_url && <img src={selected.photo_url} alt={selected.item_name} />}
-              <div className="modal-details">
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, fontWeight: 600, lineHeight: 1.2 }}>{selected.item_name}</div>
-                    <button onClick={() => setSelected(null)} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7A6452', padding: '0 0 0 12px', flexShrink: 0 }}>✕</button>
+              <div className="modal-bg" onClick={() => { setSelected(null); setEditing(false) }}>
+                <div className="modal" onClick={e => e.stopPropagation()}>
+                  {selected.photo_url && <img src={selected.photo_url} alt={selected.item_name} />}
+                  <div className="modal-details">
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+                        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, fontWeight: 600, lineHeight: 1.2 }}>{selected.item_name}</div>
+                        <button onClick={() => { setSelected(null); setEditing(false) }} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7A6452', padding: '0 0 0 12px', flexShrink: 0 }}>✕</button>
+                      </div>
+                      {selected.customer_name && <div style={{ fontSize: 14, color: '#7A6452', marginBottom: 4 }}>For {selected.customer_name}</div>}
+                      {selected.project_date && <div style={{ fontSize: 13, color: '#7A6452', marginBottom: 14 }}>{fmt(selected.project_date)}</div>}
+
+                      {editing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                          {[
+                            { label: 'What was it', key: 'item_name', placeholder: '3-tier wedding cake' },
+                            { label: 'Customer', key: 'customer_name', placeholder: 'Maria' },
+                            { label: 'Notes', key: 'notes', placeholder: 'vanilla buttercream...' },
+                          ].map(f => (
+                            <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>{f.label}</label>
+                              <input value={editForm[f.key]} onChange={e => setEditForm({ ...editForm, [f.key]: e.target.value })} placeholder={f.placeholder} style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none' }} />
+                            </div>
+                          ))}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Date</label>
+                            <input type="date" value={editForm.project_date} onChange={e => setEditForm({ ...editForm, project_date: e.target.value })} style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none' }} />
+                          </div>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                            <button onClick={saveEdit} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Save</button>
+                            <button onClick={() => setEditing(false)} style={{ background: 'transparent', border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: '#7A6452' }}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {selected.notes && <div style={{ fontSize: 14, color: '#7A6452', fontStyle: 'italic', lineHeight: 1.6, marginTop: 8, padding: '12px', background: '#FBF4E9', borderRadius: 10 }}>{selected.notes}</div>}
+                        </>
+                      )}
+                    </div>
+
+                    {!editing && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+                        <button
+                          onClick={() => { setEditing(true); setEditForm({ item_name: selected.item_name, customer_name: selected.customer_name || '', project_date: selected.project_date || '', notes: selected.notes || '' }) }}
+                          style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '9px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteProject(selected.id, selected.photo_url)}
+                          style={{ background: 'transparent', border: '1px solid #EBC6CB', color: '#B5394F', borderRadius: 11, padding: '9px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {selected.customer_name && (
-                    <div style={{ fontSize: 14, color: '#7A6452', marginBottom: 4 }}>For {selected.customer_name}</div>
-                  )}
-                  {selected.project_date && (
-                    <div style={{ fontSize: 13, color: '#7A6452', marginBottom: 14 }}>{fmt(selected.project_date)}</div>
-                  )}
-                  {selected.notes && (
-                    <div style={{ fontSize: 14, color: '#7A6452', fontStyle: 'italic', lineHeight: 1.6, marginTop: 8, padding: '12px', background: '#FBF4E9', borderRadius: 10 }}>{selected.notes}</div>
-                  )}
                 </div>
-                <button
-                  onClick={() => deleteProject(selected.id, selected.photo_url)}
-                  style={{ marginTop: 24, background: 'transparent', border: '1px solid #EBC6CB', color: '#B5394F', borderRadius: 11, padding: '9px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start' }}
-                >
-                  Delete project
-                </button>
               </div>
-            </div>
-          </div>
-        )}
+            )}
     </div>
   )
 }

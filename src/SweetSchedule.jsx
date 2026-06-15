@@ -28,6 +28,7 @@ export default function SweetSchedule() {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [quickName, setQuickName] = useState('')
   const [search, setSearch] = useState('')
+  const [toast, setToast] = useState('')
 
   const blankForm = () => ({
     customer: "",
@@ -155,6 +156,8 @@ useEffect(() => {
           status: data.status,
           createdAt: new Date(data.created_at).getTime(),
         }])
+        setToast('Order added!')
+        setTimeout(() => setToast(''), 2500)
       }
     }
     setForm(blankForm())
@@ -320,6 +323,16 @@ useEffect(() => {
       `}</style>
 
       <div className="ss-wrap">
+        {toast && (
+          <div style={{
+            position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+            background: '#33241A', color: '#fff', borderRadius: 50, padding: '10px 20px',
+            fontSize: 13, fontWeight: 700, zIndex: 300, whiteSpace: 'nowrap',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+          }}>
+            {toast}
+          </div>
+        )}
         <div className="ss-head">
           <div>
             <h1 className="ss-title">

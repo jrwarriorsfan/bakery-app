@@ -28,7 +28,7 @@ function App() {
 
   return (
     <div style={{ paddingBottom: 64 }}>
-      {tab === 'home' && <Dashboard onNavigate={setTab} />}
+      {tab === 'home' && <Dashboard key={tab} onNavigate={setTab} />}
       {tab === 'orders' && <SweetSchedule />}
       {tab === 'customers' && <Customers />}
       {tab === 'recipes' && <Recipes />}

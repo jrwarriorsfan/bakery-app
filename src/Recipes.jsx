@@ -9,6 +9,7 @@ export default function Recipes() {
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', yield_amount: '', yield_unit: '', notes: '' })
   const [ingredientRows, setIngredientRows] = useState([{ ingredient_name: '', quantity: '', unit: '', unit_price: '' }])
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     loadRecipes()
@@ -116,6 +117,12 @@ export default function Recipes() {
         </button>
       </div>
       <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Store your recipes and track ingredient costs.</p>
+      <input
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search recipes..."
+        style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 12, padding: '10px 14px', outline: 'none', background: '#FFFDF8', color: '#33241A', marginBottom: 14 }}
+      />
 
       {adding && (
         <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: 18, marginBottom: 24 }}>
@@ -184,7 +191,9 @@ export default function Recipes() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {recipes.map(r => (
+          {recipes
+            .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.description?.toLowerCase().includes(search.toLowerCase()))
+            .map(r => (
             <div key={r.id}>
               <div onClick={() => selectRecipe(r)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === r.id ? '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === r.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ flex: 1 }}>
