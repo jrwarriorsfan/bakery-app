@@ -394,9 +394,10 @@ export default function SweetSchedule() {
             radial-gradient(140% 90% at 12% -10%, #FCEFDC 0%, transparent 55%),
             radial-gradient(120% 80% at 100% 0%, #F7E7E9 0%, transparent 45%),
             var(--paper);
-          min-height:100%; padding:22px 16px 60px; box-sizing:border-box;
+          min-height:100%; width:100%; padding:22px 16px 60px; box-sizing:border-box;
+          overflow-x:hidden;
         }
-        .ss-wrap{max-width:760px;margin:0 auto;}
+        .ss-wrap{max-width:760px;width:100%;margin:0 auto;box-sizing:border-box;}
         .ss-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px;}
         .ss-title{font-family:'Fraunces',serif;font-weight:600;font-size:34px;line-height:1;letter-spacing:-.01em;margin:0;}
         .ss-title .em{font-style:italic;color:var(--terra);}
@@ -420,7 +421,7 @@ export default function SweetSchedule() {
           border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none;}
         .ss-field input:focus,.ss-field textarea:focus,.ss-field select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
         .ss-field textarea{resize:vertical;min-height:46px;}
-        .ss-item-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+        .ss-item-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;}
         .ss-item-row select{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
         .ss-item-row input.item-name{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
         .ss-item-row input.item-qty{flex:0.6;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
