@@ -413,13 +413,14 @@ export default function SweetSchedule() {
         .ss-form{padding:18px;margin-bottom:26px;}
         .ss-form h2{font-family:'Fraunces',serif;font-weight:600;font-size:18px;margin:0 0 14px;}
         .ss-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-        .ss-field{display:flex;flex-direction:column;gap:5px;}
+        .ss-field{display:flex;flex-direction:column;gap:5px;min-width:0;}
         .ss-field.full{grid-column:1 / -1;}
         .ss-field label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
         .ss-field input,.ss-field textarea,.ss-field select{
           font-family:inherit;font-size:15px;color:var(--ink);background:#fff;
           border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none;
           width:100%;box-sizing:border-box;max-width:100%;}
+        .ss-field input[type="date"]{width:100%;box-sizing:border-box;max-width:100%;min-width:0;}
         .ss-field input:focus,.ss-field textarea:focus,.ss-field select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
         .ss-field textarea{resize:vertical;min-height:46px;}
         .ss-item-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;}
