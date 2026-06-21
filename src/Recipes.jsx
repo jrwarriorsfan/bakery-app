@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import Categories from './Categories.jsx'
 
 export default function Recipes() {
   const [recipes, setRecipes] = useState([])
@@ -7,13 +8,21 @@ export default function Recipes() {
   const [ingredients, setIngredients] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '', yield_amount: '', yield_unit: '', notes: '' })
+  const [form, setForm] = useState({ name: '', description: '', yield_amount: '', yield_unit: '', notes: '', category_id: '' })
   const [ingredientRows, setIngredientRows] = useState([{ ingredient_name: '', quantity: '', unit: '', unit_price: '' }])
   const [search, setSearch] = useState('')
+  const [showCategories, setShowCategories] = useState(false)
+  const [categories, setCategories] = useState([])
 
   useEffect(() => {
     loadRecipes()
   }, [])
+
+  useEffect(() => {
+  supabase.from('categories').select('*').order('name').then(({ data }) => {
+    if (data) setCategories(data)
+  })
+}, [])
 
   const loadRecipes = async () => {
     const { data, error } = await supabase.from('recipes').select('*').order('name')
@@ -62,6 +71,7 @@ export default function Recipes() {
         yield_amount: form.yield_amount ? Number(form.yield_amount) : null,
         yield_unit: form.yield_unit,
         notes: form.notes,
+        category_id: form.category_id || null,
       })
       .select()
       .single()
@@ -112,10 +122,17 @@ export default function Recipes() {
         <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: 0 }}>
           Recipes
         </h1>
-        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-          {adding ? 'Cancel' : '+ Add recipe'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowCategories(true)} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+            Categories
+          </button>
+          <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+            {adding ? 'Cancel' : '+ Add recipe'}
+          </button>
+        </div>
       </div>
+
+{showCategories && <Categories onClose={() => setShowCategories(false)} />}
       <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Store your recipes and track ingredient costs.</p>
       <input
         value={search}
@@ -136,6 +153,19 @@ export default function Recipes() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, gridColumn: '1 / -1' }}>
               <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Description (optional)</label>
               <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Classic chewy cookies with semi-sweet chocolate chips" style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Category</label>
+              <select
+                value={form.category_id}
+                onChange={e => setForm({ ...form, category_id: e.target.value })}
+                style={{ fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 11, padding: '10px 12px', outline: 'none' }}
+              >
+                <option value=''>No category</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452' }}>Yield amount</label>

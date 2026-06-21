@@ -19,7 +19,7 @@ const STATUSES = ["New", "Confirmed", "Baking", "Done"];
 const DEFAULT_SETTINGS = { dailyCapacity: 3, bakerName: "" };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-const blankItemRow = () => ({ uid: uid(), recipe_id: null, item_name: "", quantity: 1 })
+const blankItemRow = () => ({ uid: uid(), recipe_id: null, item_name: "", quantity: 1, subcategory_id: null, option_id: null })
 
 // ---- component -----------------------------------------------------------
 export default function SweetSchedule() {
@@ -37,6 +37,8 @@ export default function SweetSchedule() {
   const [viewOrder, setViewOrder] = useState(null);
   const [viewPhoto, setViewPhoto] = useState(null);
   const [orderSupplies, setOrderSupplies] = useState([]);
+  const [subcategories, setSubcategories] = useState([])
+  const [subcategoryOptions, setSubcategoryOptions] = useState([])
 
   const [inspoFile, setInspoFile] = useState(null);
   const [inspoPreview, setInspoPreview] = useState(null);
@@ -107,6 +109,15 @@ export default function SweetSchedule() {
       if (data) setRecipes(data)
     })
   }, [])
+
+  useEffect(() => {
+  supabase.from('subcategories').select('*').then(({ data }) => {
+    if (data) setSubcategories(data)
+  })
+  supabase.from('subcategory_options').select('*').then(({ data }) => {
+    if (data) setSubcategoryOptions(data)
+  })
+}, [])
 
   useEffect(() => {
     (async () => {
@@ -203,6 +214,8 @@ export default function SweetSchedule() {
         item_name: r.item_name,
         quantity: r.quantity || 1,
         recipe_id: r.recipe_id || null,
+        subcategory_id: r.subcategory_id || null,
+        option_id: r.option_id || null,
       }))
     )
 
@@ -240,7 +253,7 @@ export default function SweetSchedule() {
     })
     setItemRows(
       o.items.length > 0
-        ? o.items.map(it => ({ uid: uid(), recipe_id: it.recipe_id, item_name: it.item_name, quantity: it.quantity }))
+        ? o.items.map(it => ({ uid: uid(), recipe_id: it.recipe_id, item_name: it.item_name, quantity: it.quantity, subcategory_id: it.subcategory_id, option_id: it.option_id }))
         : [blankItemRow()]
     )
     const { data } = await supabase.from('order_supplies').select('*').eq('order_id', o.id)
@@ -313,7 +326,12 @@ export default function SweetSchedule() {
   const tomorrow = toKey(new Date(new Date().setDate(new Date().getDate() + 1)));
 
   const itemSummary = (order) =>
-    order.items.map(it => `${it.quantity}× ${it.item_name}`).join(', ')
+    order.items.map(it => {
+      const sub = subcategories.find(s => s.id === it.subcategory_id)
+      const opt = subcategoryOptions.find(o => o.id === it.option_id)
+      const tag = [sub?.name, opt?.label].filter(Boolean).join(' · ')
+      return `${it.quantity}× ${it.item_name}${tag ? ` (${tag})` : ''}`
+    }).join(', ')
 
   // ---- PDF export ----
   const exportPDF = () => {
@@ -495,11 +513,16 @@ export default function SweetSchedule() {
 
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: 8 }}>Items</div>
-                  {viewOrder.items.map(it => (
-                    <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
-                      <span style={{ fontWeight: 600 }}>{it.quantity}× {it.item_name}</span>
-                    </div>
-                  ))}
+                  {viewOrder.items.map(it => {
+                    const sub = subcategories.find(s => s.id === it.subcategory_id)
+                    const opt = subcategoryOptions.find(o => o.id === it.option_id)
+                    return (
+                      <div key={it.id} style={{ display: 'flex', flexDirection: 'column', padding: '6px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
+                        <span style={{ fontWeight: 600 }}>{it.quantity}× {it.item_name}</span>
+                        {(sub || opt) && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{[sub?.name, opt?.label].filter(Boolean).join(' · ')}</span>}
+                      </div>
+                    )
+                  })}
                 </div>
 
                 {viewOrder.notes && (
@@ -657,35 +680,71 @@ export default function SweetSchedule() {
             <div className="ss-field full">
               <label>Items in this order</label>
               {itemRows.map(row => (
-                <div className="ss-item-row" key={row.uid}>
-                  <select
-                    value={row.recipe_id || ''}
-                    onChange={e => {
-                      const id = e.target.value || null
-                      const found = recipes.find(r => r.id === id)
-                      updateItemRow(row.uid, { recipe_id: id, item_name: found?.name || row.item_name })
-                    }}
-                  >
-                    <option value=''>Custom / no recipe</option>
-                    {recipes.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
-                    ))}
-                  </select>
-                  <input
-                    className="item-name"
-                    value={row.item_name}
-                    onChange={e => updateItemRow(row.uid, { item_name: e.target.value })}
-                    placeholder="2-tier vanilla cake"
-                  />
-                  <input
-                    className="item-qty"
-                    type="number" min="1"
-                    value={row.quantity}
-                    onChange={e => updateItemRow(row.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })}
-                  />
-                  {itemRows.length > 1 && (
-                    <button className="ss-icon" type="button" onClick={() => removeItemRow(row.uid)}>✕</button>
-                  )}
+                <div key={row.uid} style={{ border: '1px solid var(--line)', borderRadius: 11, padding: 10, marginBottom: 8 }}>
+                  <div className="ss-item-row" style={{ marginBottom: subcategories.some(s => s.category_id === recipes.find(r => r.id === row.recipe_id)?.category_id) ? 8 : 0 }}>
+                    <select
+                      value={row.recipe_id || ''}
+                      onChange={e => {
+                        const id = e.target.value || null
+                        const found = recipes.find(r => r.id === id)
+                        updateItemRow(row.uid, { recipe_id: id, item_name: found?.name || row.item_name, subcategory_id: null, option_id: null })
+                      }}
+                    >
+                      <option value=''>Custom / no recipe</option>
+                      {recipes.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
+                    <input
+                      className="item-name"
+                      value={row.item_name}
+                      onChange={e => updateItemRow(row.uid, { item_name: e.target.value })}
+                      placeholder="2-tier vanilla cake"
+                    />
+                    <input
+                      className="item-qty"
+                      type="number" min="1"
+                      value={row.quantity}
+                      onChange={e => updateItemRow(row.uid, { quantity: Math.max(1, Number(e.target.value) || 1) })}
+                    />
+                    {itemRows.length > 1 && (
+                      <button className="ss-icon" type="button" onClick={() => removeItemRow(row.uid)}>✕</button>
+                    )}
+                  </div>
+
+                  {(() => {
+                    const recipe = recipes.find(r => r.id === row.recipe_id)
+                    if (!recipe?.category_id) return null
+                    const types = subcategories.filter(s => s.category_id === recipe.category_id)
+                    if (types.length === 0) return null
+                    const sizeOptions = subcategoryOptions.filter(o => o.subcategory_id === row.subcategory_id)
+                    return (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select
+                          value={row.subcategory_id || ''}
+                          onChange={e => updateItemRow(row.uid, { subcategory_id: e.target.value || null, option_id: null })}
+                          style={{ flex: 1, fontFamily: 'inherit', fontSize: 13, border: '1px solid var(--line)', borderRadius: 9, padding: '7px 9px', outline: 'none' }}
+                        >
+                          <option value=''>Type...</option>
+                          {types.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                        {row.subcategory_id && sizeOptions.length > 0 && (
+                          <select
+                            value={row.option_id || ''}
+                            onChange={e => updateItemRow(row.uid, { option_id: e.target.value || null })}
+                            style={{ flex: 1, fontFamily: 'inherit', fontSize: 13, border: '1px solid var(--line)', borderRadius: 9, padding: '7px 9px', outline: 'none' }}
+                          >
+                            <option value=''>Size...</option>
+                            {sizeOptions.map(o => (
+                              <option key={o.id} value={o.id}>{o.label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               ))}
               <button className="ss-add-row" type="button" onClick={addItemRow}>+ Add another item</button>
