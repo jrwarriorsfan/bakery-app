@@ -473,7 +473,15 @@ export default function SweetSchedule() {
           60% { transform: scale(1.02); }
           100% { opacity: 1; transform: scale(1); }
         }
-        @media(max-width:520px){.ss-grid{grid-template-columns:1fr;}.ss-title{font-size:28px;}.ss-order .rowend{max-width:none;}}
+        @media(max-width:520px){
+          .ss-grid{grid-template-columns:1fr;}
+          .ss-title{font-size:28px;}
+          .ss-order .rowend{max-width:none;}
+          .ss-item-row{flex-wrap:wrap;}
+          .ss-item-row select{flex:1 1 100%;}
+          .ss-item-row input.item-name{flex:1 1 100%;}
+          .ss-item-row input.item-qty{flex:1 1 100%;}
+        }
       `}</style>
 
       <div className="ss-wrap">
