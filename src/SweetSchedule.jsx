@@ -763,8 +763,12 @@ export default function SweetSchedule() {
 
             <div className="ss-field">
               <label>Due date</label>
-              <input type="date" value={form.dueDate}
-                onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+              <input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                style={{ width: '100%', boxSizing: 'border-box', maxWidth: '100%', minWidth: 0, appearance: 'none', WebkitAppearance: 'none' }}
+              />
             </div>
             <div className="ss-field">
               <label>Price ($)</label>
