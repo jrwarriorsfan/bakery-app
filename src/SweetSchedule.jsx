@@ -34,6 +34,9 @@ export default function SweetSchedule() {
   const [inspoPreview, setInspoPreview] = useState(null)
   const inspoRef = useRef()
   const [viewPhoto, setViewPhoto] = useState(null)
+  const [supplies, setSupplies] = useState([])
+  const [supplyRows, setSupplyRows] = useState([{ supply_name: '', quantity: '' }])
+  const [viewOrder, setViewOrder] = useState(null)
 
   const blankForm = () => ({
     customer: "",
@@ -195,6 +198,12 @@ useEffect(() => {
           inspiration_photo_url: data.inspiration_photo_url,
           createdAt: new Date(data.created_at).getTime(),
         }])
+        const validSupplies = supplyRows.filter(s => s.supply_name.trim())
+        if (validSupplies.length > 0) {
+          await supabase.from('order_supplies').insert(
+            validSupplies.map(s => ({ order_id: data.id, supply_name: s.supply_name, quantity: s.quantity }))
+          )
+        }
         setToast('Order added!')
         setTimeout(() => setToast(''), 2500)
       }
@@ -202,6 +211,7 @@ useEffect(() => {
     setForm(blankForm())
     setInspoFile(null)
     setInspoPreview(null)
+    setSupplyRows([{ supply_name: '', quantity: '' }])
   }
 
   const handleInspoChange = (e) => {
@@ -209,6 +219,23 @@ useEffect(() => {
     if (!file) return
     setInspoFile(file)
     setInspoPreview(URL.createObjectURL(file))
+  }
+
+  const addSupplyRow = () => {
+  setSupplyRows(prev => [...prev, { supply_name: '', quantity: '' }])
+  }
+
+  const updateSupplyRow = (index, field, value) => {
+    setSupplyRows(prev => prev.map((row, i) => i === index ? { ...row, [field]: value } : row))
+  }
+
+  const removeSupplyRow = (index) => {
+    setSupplyRows(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const loadSupplies = async (orderId) => {
+    const { data } = await supabase.from('order_supplies').select('*').eq('order_id', orderId)
+    if (data) setSupplies(data)
   }
 
   const startEdit = (o) => {
@@ -438,7 +465,48 @@ useEffect(() => {
             <img src={viewPhoto} alt="inspiration full" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: 12, objectFit: 'contain' }} />
           </div>
         )}
+        
+        {viewOrder && (
+          <div className="modal-bg-order" onClick={() => setViewOrder(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.6)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#FFFDF8', borderRadius: 20, maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
+              {viewOrder.inspiration_photo_url && (
+                <img src={viewOrder.inspiration_photo_url} alt="inspiration" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: '20px 20px 0 0', cursor: 'pointer' }} onClick={() => setViewPhoto(viewOrder.inspiration_photo_url)} />
+              )}
+              <div style={{ padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div style={{ fontFamily: 'Fraunces, serif', fontSize: 22, fontWeight: 600 }}>{viewOrder.qty}× {viewOrder.item}</div>
+                  <button onClick={() => setViewOrder(null)} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--ink-soft)' }}>✕</button>
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 4 }}>
+                  {viewOrder.customer || '—'}{viewOrder.contact ? ` · ${viewOrder.contact}` : ''}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 14 }}>{fmtLong(viewOrder.dueDate)}</div>
 
+                {viewOrder.notes && (
+                  <div style={{ fontSize: 14, color: 'var(--ink-soft)', fontStyle: 'italic', padding: 12, background: 'var(--paper)', borderRadius: 10, marginBottom: 14 }}>{viewOrder.notes}</div>
+                )}
+
+                {supplies.length > 0 && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: 8 }}>Supplies needed</div>
+                    {supplies.map(s => (
+                      <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
+                        <span>{s.supply_name}</span>
+                        {s.quantity && <span style={{ color: 'var(--ink-soft)' }}>{s.quantity}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 50, background: viewOrder.paid ? '#EEF4E7' : '#F4E9D8', color: viewOrder.paid ? '#46612F' : 'var(--ink-soft)' }}>{viewOrder.paid ? 'Paid' : 'Unpaid'}</span>
+                  <span className={`ss-status st-${viewOrder.status}`}>{viewOrder.status}</span>
+                  {viewOrder.price && <span style={{ fontSize: 13, color: 'var(--ink-soft)', alignSelf: 'center' }}>${Number(viewOrder.price).toFixed(2)}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="ss-head">
           <div>
             <h1 className="ss-title">
@@ -640,6 +708,30 @@ useEffect(() => {
             <input ref={inspoRef} type="file" accept="image/*" onChange={handleInspoChange} style={{ display: 'none' }} />
           </div>
 
+          <div className="ss-field full">
+            <label>Supplies needed (optional)</label>
+            {supplyRows.map((row, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <input
+                  value={row.supply_name}
+                  onChange={e => updateSupplyRow(i, 'supply_name', e.target.value)}
+                  placeholder="Fondant, edible glitter, cake topper..."
+                  style={{ flex: 2 }}
+                />
+                <input
+                  value={row.quantity}
+                  onChange={e => updateSupplyRow(i, 'quantity', e.target.value)}
+                  placeholder="qty / notes"
+                  style={{ flex: 1 }}
+                />
+                <button onClick={() => removeSupplyRow(i)} className="ss-icon" type="button">✕</button>
+              </div>
+            ))}
+            <button onClick={addSupplyRow} type="button" style={{ background: 'transparent', border: '1px dashed var(--line)', borderRadius: 9, padding: '8px 14px', fontFamily: 'inherit', fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>
+              + Add supply
+            </button>
+          </div>
+
           <div className={`ss-warn lv-${formCap.level}`}>
             <span className="ss-dot" />
             <span>
@@ -727,32 +819,24 @@ useEffect(() => {
                 </div>
                 <div className="ss-card">
                   {items.map((o) => (
-                    <div className={`ss-order ${o.status === "Done" ? "done" : ""}`} key={o.id} style={{ animation: 'popIn 0.25s ease forwards' }}>
+                    <div className={`ss-order ${o.status === "Done" ? "done" : ""}`} key={o.id} style={{ animation: 'popIn 0.25s ease forwards', cursor: 'pointer' }} onClick={() => { setViewOrder(o); loadSupplies(o.id) }}>
                       <div className="qty">{o.qty}×</div>
                       <div className="body">
                         <div className="item">{o.item || "—"}</div>
                         <div className="who">
                           {o.customer || "—"}{o.contact ? ` · ${o.contact}` : ""}
                         </div>
-                       {o.notes && <div className="notes">{o.notes}</div>}
-                       {o.inspiration_photo_url && (
-                         <img src={o.inspiration_photo_url} alt="inspiration" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginTop: 6, cursor: 'pointer' }} onClick={() => setViewPhoto(o.inspiration_photo_url)} />
-                       )}
-                       </div>
-                      <div className="rowend">
+                        {o.notes && <div className="notes">{o.notes}</div>}
+                      </div>
+                      <div className="rowend" onClick={e => e.stopPropagation()}>
                         <button className={`ss-status st-${o.status}`}
                           onClick={() => cycleStatus(o.id)} title="Tap to change">
                           {o.status}
                         </button>
-                        <button className="ss-icon" onClick={() => startEdit(o)} title="Edit">✎</button>
-                        <button
-                          className={`ss-status`}
-                          style={{ background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : '#7A6452' }}
-                          onClick={() => togglePaid(o.id)}
-                          title="Toggle paid"
-                        >
+                        <button className={`ss-status`} style={{ background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : '#7A6452' }} onClick={() => togglePaid(o.id)} title="Toggle paid">
                           {o.paid ? 'Paid' : 'Unpaid'}
                         </button>
+                        <button className="ss-icon" onClick={() => startEdit(o)} title="Edit">✎</button>
                         <button className="ss-icon" onClick={() => remove(o.id)} title="Delete">✕</button>
                       </div>
                     </div>
