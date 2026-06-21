@@ -418,13 +418,14 @@ export default function SweetSchedule() {
         .ss-field label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
         .ss-field input,.ss-field textarea,.ss-field select{
           font-family:inherit;font-size:15px;color:var(--ink);background:#fff;
-          border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none;}
+          border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none;
+          width:100%;box-sizing:border-box;max-width:100%;}
         .ss-field input:focus,.ss-field textarea:focus,.ss-field select:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(200,100,60,.12);}
         .ss-field textarea{resize:vertical;min-height:46px;}
         .ss-item-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;}
-        .ss-item-row select{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
-        .ss-item-row input.item-name{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
-        .ss-item-row input.item-qty{flex:0.6;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;}
+        .ss-item-row select{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;box-sizing:border-box;min-width:0;}
+        .ss-item-row input.item-name{flex:2;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;box-sizing:border-box;min-width:0;}
+        .ss-item-row input.item-qty{flex:0.6;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;outline:none;box-sizing:border-box;min-width:0;}
         .ss-add-row{background:transparent;border:1px dashed var(--line);border-radius:9px;padding:8px 14px;
           font-family:inherit;font-size:13px;color:var(--ink-soft);cursor:pointer;margin-top:2px;}
         .ss-warn{margin:12px 0 4px;border-radius:11px;padding:9px 12px;font-size:13px;font-weight:600;
