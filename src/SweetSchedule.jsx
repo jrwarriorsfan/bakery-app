@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from './supabase'
 
 // ---- helpers -------------------------------------------------------------
@@ -30,6 +30,10 @@ export default function SweetSchedule() {
   const [search, setSearch] = useState('')
   const [toast, setToast] = useState('')
   const [recipes, setRecipes] = useState([])
+  const [inspoFile, setInspoFile] = useState(null)
+  const [inspoPreview, setInspoPreview] = useState(null)
+  const inspoRef = useRef()
+  const [viewPhoto, setViewPhoto] = useState(null)
 
   const blankForm = () => ({
     customer: "",
@@ -43,6 +47,7 @@ export default function SweetSchedule() {
     status: "New",
     paid: false,
     price: "",
+    inspiration_photo_url: null,
   });
   const [form, setForm] = useState(blankForm());
   const [staged, setStaged] = useState([]);
@@ -66,8 +71,9 @@ export default function SweetSchedule() {
           notes: o.notes,
           status: o.status,
           paid: o.paid,
-          recipe_id: o.recipe_id,
           price: o.price,
+          recipe_id: o.recipe_id,
+          inspiration_photo_url: o.inspiration_photo_url,
           createdAt: new Date(o.created_at).getTime(),
         }))
         setOrders(mapped)
@@ -118,6 +124,19 @@ useEffect(() => {
 
   const submit = async () => {
     if (!form.item.trim()) return
+
+    let inspiration_photo_url = form.inspiration_photo_url || null
+
+    if (inspoFile) {
+      const ext = inspoFile.name.split('.').pop()
+      const fileName = `${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('order-photos').upload(fileName, inspoFile)
+      if (!uploadError) {
+        const { data } = supabase.storage.from('order-photos').getPublicUrl(fileName)
+        inspiration_photo_url = data.publicUrl
+      }
+    }
+
     if (editingId) {
       const { error } = await supabase
         .from('orders')
@@ -125,19 +144,20 @@ useEffect(() => {
           customer_name: form.customer,
           contact: form.contact,
           customer_id: form.customer_id || null,
+          recipe_id: form.recipe_id || null,
           item: form.item,
           qty: form.qty,
           due_date: form.dueDate,
           notes: form.notes,
           status: form.status,
           paid: form.paid || false,
-          recipe_id: form.recipe_id || null,
           price: form.price ? Number(form.price) : null,
+          inspiration_photo_url,
         })
         .eq('id', editingId)
       if (error) console.log('Supabase error:', JSON.stringify(error))
       if (!error) {
-        setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...form } : o))
+        setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...form, inspiration_photo_url } : o))
         setEditingId(null)
       }
     } else {
@@ -147,12 +167,15 @@ useEffect(() => {
           customer_name: form.customer,
           contact: form.contact,
           customer_id: form.customer_id || null,
+          recipe_id: form.recipe_id || null,
           item: form.item,
           qty: form.qty,
           due_date: form.dueDate,
           notes: form.notes,
           status: form.status || 'New',
           paid: form.paid || false,
+          price: form.price ? Number(form.price) : null,
+          inspiration_photo_url,
         })
         .select()
         .single()
@@ -167,6 +190,9 @@ useEffect(() => {
           dueDate: data.due_date,
           notes: data.notes,
           status: data.status,
+          paid: data.paid,
+          price: data.price,
+          inspiration_photo_url: data.inspiration_photo_url,
           createdAt: new Date(data.created_at).getTime(),
         }])
         setToast('Order added!')
@@ -174,6 +200,15 @@ useEffect(() => {
       }
     }
     setForm(blankForm())
+    setInspoFile(null)
+    setInspoPreview(null)
+  }
+
+  const handleInspoChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setInspoFile(file)
+    setInspoPreview(URL.createObjectURL(file))
   }
 
   const startEdit = (o) => {
@@ -397,6 +432,13 @@ useEffect(() => {
             {toast}
           </div>
         )}
+
+        {viewPhoto && (
+          <div onClick={() => setViewPhoto(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.85)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, cursor: 'pointer' }}>
+            <img src={viewPhoto} alt="inspiration full" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: 12, objectFit: 'contain' }} />
+          </div>
+        )}
+
         <div className="ss-head">
           <div>
             <h1 className="ss-title">
@@ -584,6 +626,20 @@ useEffect(() => {
             </div>
           </div>
 
+          <div className="ss-field full">
+            <label>Inspiration photo (optional)</label>
+           <div
+              onClick={() => inspoRef.current.click()}
+              style={{ border: '2px dashed var(--line)', borderRadius: 11, height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', background: '#fff' }}
+            >
+              {inspoPreview || form.inspiration_photo_url
+                ? <img src={inspoPreview || form.inspiration_photo_url} alt="inspiration" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ textAlign: 'center', color: 'var(--ink-soft)', fontSize: 13 }}>📷 Tap to add a photo from the customer</div>
+              }
+            </div>
+            <input ref={inspoRef} type="file" accept="image/*" onChange={handleInspoChange} style={{ display: 'none' }} />
+          </div>
+
           <div className={`ss-warn lv-${formCap.level}`}>
             <span className="ss-dot" />
             <span>
@@ -678,8 +734,11 @@ useEffect(() => {
                         <div className="who">
                           {o.customer || "—"}{o.contact ? ` · ${o.contact}` : ""}
                         </div>
-                        {o.notes && <div className="notes">{o.notes}</div>}
-                      </div>
+                       {o.notes && <div className="notes">{o.notes}</div>}
+                       {o.inspiration_photo_url && (
+                         <img src={o.inspiration_photo_url} alt="inspiration" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginTop: 6, cursor: 'pointer' }} onClick={() => setViewPhoto(o.inspiration_photo_url)} />
+                       )}
+                       </div>
                       <div className="rowend">
                         <button className={`ss-status st-${o.status}`}
                           onClick={() => cycleStatus(o.id)} title="Tap to change">
