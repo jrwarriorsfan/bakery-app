@@ -50,7 +50,7 @@ function App() {
           to { opacity: 1; transform: translateY(0); }
         }
         .tab-content {
-          animation: fadeIn 0.2s ease forwards;
+          /* animation: fadeIn 0.2s ease forwards; */
         }
         .menu-dropdown {
           animation: slideDown 0.18s ease forwards;

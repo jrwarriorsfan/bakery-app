@@ -206,7 +206,7 @@ export default function Projects() {
       )}
 
             {selected && (
-              <div className="modal-bg" onClick={() => { setSelected(null); setEditing(false) }}>
+              <div onClick={() => { setSelected(null); setEditing(false) }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(51,36,26,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
                 <div className="modal" onClick={e => e.stopPropagation()}>
                   {selected.photo_url && <img src={selected.photo_url} alt={selected.item_name} />}
                   <div className="modal-details">
