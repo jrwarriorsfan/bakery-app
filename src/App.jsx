@@ -7,6 +7,7 @@ import Customers from './Customers.jsx'
 import Recipes from './Recipes.jsx'
 import Projects from './Projects.jsx'
 import Notes from './Notes.jsx'
+import CakeBuilder from './CakeBuilder.jsx'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -14,7 +15,7 @@ function App() {
   const [tab, setTab] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
   const settingsLabel = (t) => {
-    const labels = { home: 'Home', orders: 'Orders', customers: 'Customers', recipes: 'Recipes', projects: 'Projects', notes: 'Notes' }
+    const labels = { home: 'Home', orders: 'Orders', customers: 'Customers', recipes: 'Recipes', cakebuilder: 'Cake Builder', projects: 'Projects', notes: 'Notes' }
     return labels[t] || ''
   }
 
@@ -81,6 +82,7 @@ function App() {
               { key: 'orders', label: 'Orders' },
               { key: 'customers', label: 'Customers' },
               { key: 'recipes', label: 'Recipes' },
+              { key: 'cakebuilder', label: 'Cake Builder' },
               { key: 'projects', label: 'Projects' },
               { key: 'notes', label: 'Notes' },
             ].map(item => (
@@ -118,6 +120,7 @@ function App() {
       {tab === 'recipes' && <div className="tab-content"><Recipes /></div>}
       {tab === 'projects' && <div className="tab-content"><Projects /></div>}
       {tab === 'notes' && <div className="tab-content"><Notes /></div>}
+      {tab === 'cakebuilder' && <div className="tab-content"><CakeBuilder /></div>}
     </div>
   )
 }

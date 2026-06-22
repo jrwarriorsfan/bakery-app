@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from './supabase'
 import jsPDF from 'jspdf'
+import CakeBuilder from './CakeBuilder.jsx'
 
 // ---- helpers -------------------------------------------------------------
 const pad = (n) => String(n).padStart(2, "0");
@@ -39,6 +40,8 @@ export default function SweetSchedule() {
   const [orderSupplies, setOrderSupplies] = useState([]);
   const [subcategories, setSubcategories] = useState([])
   const [subcategoryOptions, setSubcategoryOptions] = useState([])
+  const [cakeBuilderFor, setCakeBuilderFor] = useState(null)
+  const [cakeBuilds, setCakeBuilds] = useState({})
 
   const [inspoFile, setInspoFile] = useState(null);
   const [inspoPreview, setInspoPreview] = useState(null);
@@ -159,6 +162,22 @@ export default function SweetSchedule() {
     if (data) setOrderSupplies(data)
   }
 
+  const loadCakeBuilds = async (order) => {
+    const buildIds = order.items.map(it => it.cake_build_id).filter(Boolean)
+    if (buildIds.length === 0) { setCakeBuilds({}); return }
+
+    const { data: builds } = await supabase.from('cake_builds').select('*').in('id', buildIds)
+    const { data: tiers } = await supabase.from('cake_tiers').select('*').in('build_id', buildIds).order('tier_order')
+
+    const map = {}
+    buildIds.forEach(id => {
+      const build = builds?.find(b => b.id === id)
+      const buildTiers = tiers?.filter(t => t.build_id === id) || []
+      if (build) map[id] = { ...build, tiers: buildTiers }
+    })
+    setCakeBuilds(map)
+  }
+
   const handleInspoChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -216,6 +235,7 @@ export default function SweetSchedule() {
         recipe_id: r.recipe_id || null,
         subcategory_id: r.subcategory_id || null,
         option_id: r.option_id || null,
+        cake_build_id: r.cake_build_id || null,
       }))
     )
 
@@ -527,10 +547,26 @@ export default function SweetSchedule() {
                   {viewOrder.items.map(it => {
                     const sub = subcategories.find(s => s.id === it.subcategory_id)
                     const opt = subcategoryOptions.find(o => o.id === it.option_id)
+                    const build = it.cake_build_id ? cakeBuilds[it.cake_build_id] : null
                     return (
-                      <div key={it.id} style={{ display: 'flex', flexDirection: 'column', padding: '6px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
+                      <div key={it.id} style={{ display: 'flex', flexDirection: 'column', padding: '8px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
                         <span style={{ fontWeight: 600 }}>{it.quantity}× {it.item_name}</span>
                         {(sub || opt) && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{[sub?.name, opt?.label].filter(Boolean).join(' · ')}</span>}
+
+                        {build && (
+                          <div style={{ marginTop: 8, background: 'var(--paper)', borderRadius: 10, padding: 10 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--terra)', marginBottom: 6 }}>🎂 Custom cake design</div>
+                            {build.tiers.map(t => (
+                              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+                                <div style={{ width: 16, height: 16, borderRadius: 4, background: t.color, flexShrink: 0 }} />
+                                <span style={{ fontSize: 13 }}>Tier {t.tier_order}: {t.size || '—'}{t.flavor ? `, ${t.flavor}` : ''}</span>
+                              </div>
+                            ))}
+                            {build.toppers && <div style={{ fontSize: 13, marginTop: 6 }}><strong>Toppers:</strong> {build.toppers}</div>}
+                            {build.message && <div style={{ fontSize: 13, marginTop: 2 }}><strong>Message:</strong> "{build.message}"</div>}
+                            {build.notes && <div style={{ fontSize: 13, marginTop: 2, fontStyle: 'italic', color: 'var(--ink-soft)' }}>{build.notes}</div>}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -558,6 +594,22 @@ export default function SweetSchedule() {
                   {viewOrder.price && <span style={{ fontSize: 13, color: 'var(--ink-soft)', alignSelf: 'center' }}>${Number(viewOrder.price).toFixed(2)}</span>}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {cakeBuilderFor && (
+          <div onClick={() => setCakeBuilderFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#FFFDF8', borderRadius: 20, maxWidth: 480, width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: 20 }}>
+              <CakeBuilder
+                embedded
+                onUse={(build) => {
+                  const summary = `${build.tiers.length} tier${build.tiers.length > 1 ? 's' : ''}${build.message ? ` · "${build.message}"` : ''}`
+                  updateItemRow(cakeBuilderFor, { cake_build_id: build.id, cake_build_summary: summary })
+                  setCakeBuilderFor(null)
+                }}
+                onClose={() => setCakeBuilderFor(null)}
+              />
             </div>
           </div>
         )}
@@ -756,6 +808,19 @@ export default function SweetSchedule() {
                       </div>
                     )
                   })()}
+                  <div style={{ marginTop: 8 }}>
+                    {row.cake_build_id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FBF4E9', borderRadius: 9, padding: '8px 10px', fontSize: 13 }}>
+                        <span style={{ flex: 1 }}>🎂 {row.cake_build_summary}</span>
+                        <button type="button" onClick={() => setCakeBuilderFor(row.uid)} style={{ background: 'transparent', border: 'none', color: '#C8643C', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Edit</button>
+                        <button type="button" onClick={() => updateItemRow(row.uid, { cake_build_id: null, cake_build_summary: null })} style={{ background: 'transparent', border: 'none', color: '#7A6452', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={() => setCakeBuilderFor(row.uid)} style={{ background: 'transparent', border: '1px dashed var(--terra)', color: 'var(--terra)', borderRadius: 9, padding: '7px 12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                        🎂 Build custom cake
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               <button className="ss-add-row" type="button" onClick={addItemRow}>+ Add another item</button>
@@ -877,7 +942,7 @@ export default function SweetSchedule() {
                       className={`ss-order ${o.status === "Done" ? "done" : ""}`}
                       key={o.id}
                       style={{ animation: 'popIn 0.25s ease forwards' }}
-                      onClick={() => { setViewOrder(o); loadOrderSupplies(o.id) }}
+                      onClick={() => { setViewOrder(o); loadOrderSupplies(o.id); loadCakeBuilds(o) }}
                     >
                       <div className="qty">{o.items.reduce((sum, it) => sum + it.quantity, 0)}×</div>
                       <div className="body">
