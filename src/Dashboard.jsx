@@ -216,6 +216,7 @@ export default function Dashboard({ onNavigate }) {
                     <div key={it.id} style={{ display: 'flex', flexDirection: 'column', padding: '8px 0', borderTop: '1px solid #E7D9C5', fontSize: 14 }}>
                       <span style={{ fontWeight: 600 }}>{it.quantity}× {it.item_name}</span>
                       {(sub || opt) && <span style={{ fontSize: 12, color: '#7A6452' }}>{[sub?.name, opt?.label].filter(Boolean).join(' · ')}</span>}
+                      {it.notes && <span style={{ fontSize: 12, color: '#7A6452', fontStyle: 'italic', marginTop: 2 }}>{it.notes}</span>}
 
                       {build && (
                         <div style={{ marginTop: 8, background: '#FBF4E9', borderRadius: 10, padding: 10 }}>

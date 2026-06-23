@@ -20,7 +20,7 @@ const STATUSES = ["New", "Confirmed", "Baking", "Done"];
 const DEFAULT_SETTINGS = { dailyCapacity: 3, bakerName: "" };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-const blankItemRow = () => ({ uid: uid(), recipe_id: null, item_name: "", quantity: 1, subcategory_id: null, option_id: null })
+const blankItemRow = () => ({ uid: uid(), recipe_id: null, item_name: "", quantity: 1, subcategory_id: null, option_id: null, cake_build_id: null, cake_build_summary: null, notes: "" })
 
 // ---- component -----------------------------------------------------------
 export default function SweetSchedule() {
@@ -236,6 +236,7 @@ export default function SweetSchedule() {
         subcategory_id: r.subcategory_id || null,
         option_id: r.option_id || null,
         cake_build_id: r.cake_build_id || null,
+        notes: r.notes || null,
       }))
     )
 
@@ -273,7 +274,7 @@ export default function SweetSchedule() {
     })
     setItemRows(
       o.items.length > 0
-        ? o.items.map(it => ({ uid: uid(), recipe_id: it.recipe_id, item_name: it.item_name, quantity: it.quantity, subcategory_id: it.subcategory_id, option_id: it.option_id }))
+        ? o.items.map(it => ({ uid: uid(), recipe_id: it.recipe_id, item_name: it.item_name, quantity: it.quantity, subcategory_id: it.subcategory_id, option_id: it.option_id, cake_build_id: it.cake_build_id, cake_build_summary: it.cake_build_id ? '🎂 Custom cake design' : null, notes: it.notes || "" }))
         : [blankItemRow()]
     )
     const { data } = await supabase.from('order_supplies').select('*').eq('order_id', o.id)
@@ -281,7 +282,7 @@ export default function SweetSchedule() {
     setInspoFile(null)
     setInspoPreview(null)
     document.getElementById("ss-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+    };
 
   const cancelEdit = () => {
     setEditingId(null)
@@ -552,6 +553,7 @@ export default function SweetSchedule() {
                       <div key={it.id} style={{ display: 'flex', flexDirection: 'column', padding: '8px 0', borderTop: '1px solid var(--line)', fontSize: 14 }}>
                         <span style={{ fontWeight: 600 }}>{it.quantity}× {it.item_name}</span>
                         {(sub || opt) && <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{[sub?.name, opt?.label].filter(Boolean).join(' · ')}</span>}
+                        {it.notes && <span style={{ fontSize: 12, color: 'var(--ink-soft)', fontStyle: 'italic', marginTop: 2 }}>{it.notes}</span>}
 
                         {build && (
                           <div style={{ marginTop: 8, background: 'var(--paper)', borderRadius: 10, padding: 10 }}>
@@ -774,6 +776,12 @@ export default function SweetSchedule() {
                       <button className="ss-icon" type="button" onClick={() => removeItemRow(row.uid)}>✕</button>
                     )}
                   </div>
+                  <input
+                    value={row.notes}
+                    onChange={e => updateItemRow(row.uid, { notes: e.target.value })}
+                    placeholder="Notes for this item (flavor, allergy, special request...)"
+                    style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: 13, border: '1px solid var(--line)', borderRadius: 9, padding: '7px 10px', outline: 'none', marginTop: 8 }}
+                  />
 
                   {(() => {
                     const recipe = recipes.find(r => r.id === row.recipe_id)
