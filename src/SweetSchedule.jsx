@@ -690,7 +690,7 @@ export default function SweetSchedule() {
           </div>
         )}
 
-        <div className="ss-head" style={{ position: 'sticky', top: 56, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 8, marginBottom: 0, flexWrap: 'wrap' }}>
+        <div className="ss-head" style={{ position: 'sticky', top: 56, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 10, marginBottom: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--line)', boxShadow: '0 4px 12px -8px rgba(110,80,50,0.3)' }}>
           <div>
             <h1 className="ss-title" style={{ fontSize: 24 }}>
               {settings.bakerName ? `${settings.bakerName}'s` : "The"} <span className="em">Bake</span> Book
