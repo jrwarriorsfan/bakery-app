@@ -116,7 +116,7 @@ function App() {
 
       {tab === 'home' && <div className="tab-content"><Dashboard key={tab} onNavigate={setTab} /></div>}
       {tab === 'orders' && <div className="tab-content"><SweetSchedule /></div>}
-      {tab === 'customers' && <div className="tab-content"><Customers /></div>}
+      {tab === 'customers' && <div className="tab-content"><Customers onNavigate={setTab} /></div>}
       {tab === 'recipes' && <div className="tab-content"><Recipes /></div>}
       {tab === 'projects' && <div className="tab-content"><Projects /></div>}
       {tab === 'notes' && <div className="tab-content"><Notes /></div>}

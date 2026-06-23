@@ -325,6 +325,54 @@ export default function SweetSchedule() {
     if (!error) setOrders(prev => prev.map(o => o.id === id ? { ...o, status: nextStatus } : o))
   }
 
+  const duplicateOrder = async (order) => {
+    // copy the order itself
+    const { data: newOrder, error } = await supabase
+      .from('orders')
+      .insert({
+        customer_name: order.customer,
+        contact: order.contact,
+        customer_id: order.customer_id || null,
+        due_date: todayStr(),
+        notes: order.notes,
+        status: 'New',
+        paid: false,
+        price: order.price,
+        inspiration_photo_url: order.inspiration_photo_url,
+      })
+      .select()
+      .single()
+    if (error) { console.log('duplicate order error:', JSON.stringify(error)); return }
+
+    // copy items
+    if (order.items.length > 0) {
+      await supabase.from('order_items').insert(
+        order.items.map(it => ({
+          order_id: newOrder.id,
+          item_name: it.item_name,
+          quantity: it.quantity,
+          recipe_id: it.recipe_id,
+          subcategory_id: it.subcategory_id,
+          option_id: it.option_id,
+          cake_build_id: it.cake_build_id, // reuse the same cake build, doesn't need duplicating since it's read-only history
+          notes: it.notes,
+        }))
+      )
+    }
+
+    // copy supplies
+    const { data: supplies } = await supabase.from('order_supplies').select('*').eq('order_id', order.id)
+    if (supplies && supplies.length > 0) {
+      await supabase.from('order_supplies').insert(
+        supplies.map(s => ({ order_id: newOrder.id, supply_name: s.supply_name, quantity: s.quantity }))
+      )
+    }
+
+    await loadOrders()
+    setToast('Order duplicated!')
+    setTimeout(() => setToast(''), 2500)
+  }
+
   const togglePaid = async (id) => {
     const order = orders.find(o => o.id === id)
     const { error } = await supabase.from('orders').update({ paid: !order.paid }).eq('id', id)
@@ -1054,6 +1102,7 @@ export default function SweetSchedule() {
                         <button className="ss-status" style={{ background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : 'var(--ink-soft)' }} onClick={() => togglePaid(o.id)} title="Toggle paid">
                           {o.paid ? 'Paid' : 'Unpaid'}
                         </button>
+                        <button className="ss-icon" onClick={() => duplicateOrder(o)} title="Duplicate">⧉</button>
                         <button className="ss-icon" onClick={() => startEdit(o)} title="Edit">✎</button>
                         <button className="ss-icon" onClick={() => remove(o.id)} title="Delete">✕</button>
                       </div>

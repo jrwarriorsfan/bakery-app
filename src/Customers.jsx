@@ -18,7 +18,7 @@ const fmtDate = (s) => {
 const statusColors = { New: '#FBE6E6', Confirmed: '#E7EEF6', Baking: '#FCF0D9', Done: '#EEF4E7' }
 const statusText = { New: '#8E2433', Confirmed: '#2D4F77', Baking: '#8A5B12', Done: '#46612F' }
 
-export default function Customers() {
+export default function Customers({ onNavigate }) {
   const [customers, setCustomers] = useState([])
   const [selected, setSelected] = useState(null)
   const [orders, setOrders] = useState([])
@@ -36,10 +36,79 @@ export default function Customers() {
     setLoading(false)
   }
 
-  const loadOrders = async (customerId) => {
-    const { data, error } = await supabase
-      .from('orders').select('*').eq('customer_id', customerId).order('due_date', { ascending: false })
-    if (!error) setOrders(data)
+const loadOrders = async (customerId) => {
+  const { data: ordersData, error } = await supabase
+    .from('orders').select('*').eq('customer_id', customerId).order('due_date', { ascending: false })
+  if (error) return
+
+  const orderIds = ordersData.map(o => o.id)
+  const { data: itemsData } = orderIds.length > 0
+    ? await supabase.from('order_items').select('*').in('order_id', orderIds)
+    : { data: [] }
+
+  const merged = ordersData.map(o => ({
+    ...o,
+    items: itemsData.filter(it => it.order_id === o.id),
+  }))
+  setOrders(merged)
+}
+
+const duplicateOrder = async (order) => {
+  const { data: newOrder, error } = await supabase
+    .from('orders')
+    .insert({
+      customer_name: order.customer_name,
+      contact: order.contact,
+      customer_id: order.customer_id || null,
+      due_date: todayStr(),
+      notes: order.notes,
+      status: 'New',
+      paid: false,
+      price: order.price,
+      inspiration_photo_url: order.inspiration_photo_url,
+    })
+    .select()
+    .single()
+  if (error) { console.log('duplicate error:', JSON.stringify(error)); return }
+
+  if (order.items && order.items.length > 0) {
+    await supabase.from('order_items').insert(
+      order.items.map(it => ({
+        order_id: newOrder.id,
+        item_name: it.item_name,
+        quantity: it.quantity,
+        recipe_id: it.recipe_id,
+        subcategory_id: it.subcategory_id,
+        option_id: it.option_id,
+        cake_build_id: it.cake_build_id,
+        notes: it.notes,
+      }))
+    )
+  }
+
+  const { data: supplies } = await supabase.from('order_supplies').select('*').eq('order_id', order.id)
+  if (supplies && supplies.length > 0) {
+    await supabase.from('order_supplies').insert(
+      supplies.map(s => ({ order_id: newOrder.id, supply_name: s.supply_name, quantity: s.quantity }))
+    )
+  }
+
+  loadOrders(selected.id)
+  if (onNavigate) onNavigate('orders')
+}
+
+  const [allOrders, setAllOrders] = useState([])
+
+  useEffect(() => {
+    supabase.from('orders').select('*').then(({ data }) => {
+      if (data) setAllOrders(data)
+    })
+  }, [])
+
+  const lifetimeSpend = (customerId) => {
+    return allOrders
+      .filter(o => o.customer_id === customerId && o.paid && o.price)
+      .reduce((sum, o) => sum + Number(o.price), 0)
   }
 
   const selectCustomer = (customer) => {
@@ -99,6 +168,11 @@ export default function Customers() {
       setCustomers(prev => prev.filter(c => c.id !== id))
       if (selected?.id === id) { setSelected(null); setOrders([]) }
     }
+  }
+
+  const todayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
 
   const favorites = customers.filter(c => c.favorite)
@@ -249,6 +323,13 @@ export default function Customers() {
                         <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic', marginBottom: 12, padding: '10px 12px', background: '#FFFDF8', borderRadius: 10 }}>{c.notes}</div>
                       )}
 
+                      {lifetimeSpend(c.id) > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, padding: '12px 14px', background: '#EAF3DE', borderRadius: 12 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#27500A' }}>Lifetime spend</span>
+                          <span style={{ fontSize: 18, fontFamily: 'Fraunces, serif', fontWeight: 600, color: '#27500A' }}>${lifetimeSpend(c.id).toFixed(2)}</span>
+                        </div>
+                      )}
+
                       {/* order history */}
                       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 8 }}>Order history</div>
                       {orders.length === 0 ? (
@@ -257,13 +338,18 @@ export default function Customers() {
                         orders.map(o => (
                           <div key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #E7D9C5' }}>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 600, fontSize: 14 }}>{o.qty}× {o.item}</div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>
+                                {o.items && o.items.length > 0
+                                  ? o.items.map(it => `${it.quantity}× ${it.item_name}`).join(', ')
+                                  : '—'}
+                              </div>
                               <div style={{ fontSize: 13, color: '#7A6452' }}>{fmtDate(o.due_date)}</div>
                               {o.notes && <div style={{ fontSize: 13, color: '#7A6452', fontStyle: 'italic' }}>{o.notes}</div>}
                             </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 50, background: o.paid ? '#EEF4E7' : '#F4E9D8', color: o.paid ? '#46612F' : '#7A6452' }}>{o.paid ? 'Paid' : 'Unpaid'}</span>
                               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 50, background: statusColors[o.status], color: statusText[o.status] }}>{o.status}</span>
+                              <button onClick={() => duplicateOrder(o)} title="Duplicate this order" style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: '#7A6452', padding: '2px 4px' }}>⧉</button>
                             </div>
                           </div>
                         ))
