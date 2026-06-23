@@ -42,6 +42,8 @@ export default function SweetSchedule() {
   const [subcategoryOptions, setSubcategoryOptions] = useState([])
   const [cakeBuilderFor, setCakeBuilderFor] = useState(null)
   const [cakeBuilds, setCakeBuilds] = useState({})
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState([])
 
   const [inspoFile, setInspoFile] = useState(null);
   const [inspoPreview, setInspoPreview] = useState(null);
@@ -183,6 +185,22 @@ export default function SweetSchedule() {
     if (!file) return
     setInspoFile(file)
     setInspoPreview(URL.createObjectURL(file))
+  }
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const markSelectedDone = async () => {
+    if (selectedIds.length === 0) return
+    const { error } = await supabase.from('orders').update({ status: 'Done' }).in('id', selectedIds)
+    if (!error) {
+      setOrders(prev => prev.map(o => selectedIds.includes(o.id) ? { ...o, status: 'Done' } : o))
+      setSelectedIds([])
+      setSelectMode(false)
+      setToast(`${selectedIds.length} order${selectedIds.length > 1 ? 's' : ''} marked done!`)
+      setTimeout(() => setToast(''), 2500)
+    }
   }
 
   // ---- submit (create or update order + items + supplies) ----
@@ -355,52 +373,100 @@ export default function SweetSchedule() {
     }).join(', ')
 
   // ---- PDF export ----
-  const exportPDF = () => {
-    const doc = new jsPDF()
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(20)
-    doc.text('Order List', 14, 20)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(11)
-    doc.text(`Generated ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`, 14, 28)
-
-    let y = 40
-    grouped.forEach(({ date, items }) => {
-      if (y > 260) { doc.addPage(); y = 20 }
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(13)
-      doc.text(fmtLong(date), 14, y)
-      y += 6
-
-      items.forEach(o => {
-        if (y > 270) { doc.addPage(); y = 20 }
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(11)
-        doc.text(`${o.customer || 'Unknown'}`, 18, y)
-        y += 5
-        o.items.forEach(it => {
-          doc.setFont('helvetica', 'normal')
-          doc.setFontSize(10)
-          doc.text(`  ${it.quantity}x ${it.item_name}`, 20, y)
-          y += 5
-        })
-        if (o.notes) {
-          doc.setFontSize(9)
-          doc.setTextColor(120, 100, 82)
-          doc.text(`  ${o.notes}`, 20, y)
-          doc.setTextColor(0, 0, 0)
-          y += 5
-        }
-        doc.setFontSize(10)
-        doc.text(`  ${o.status}${o.paid ? ' · Paid' : ' · Unpaid'}${o.price ? ` · $${Number(o.price).toFixed(2)}` : ''}`, 20, y)
-        y += 7
+  const exportPDF = async () => {
+    const allBuildIds = orders.flatMap(o => o.items.map(it => it.cake_build_id)).filter(Boolean)
+    let exportCakeBuilds = {}
+    if (allBuildIds.length > 0) {
+      const { data: builds } = await supabase.from('cake_builds').select('*').in('id', allBuildIds)
+      const { data: tiers } = await supabase.from('cake_tiers').select('*').in('build_id', allBuildIds).order('tier_order')
+      allBuildIds.forEach(id => {
+        const build = builds?.find(b => b.id === id)
+        const buildTiers = tiers?.filter(t => t.build_id === id) || []
+        if (build) exportCakeBuilds[id] = { ...build, tiers: buildTiers }
       })
-      y += 4
-    })
+    }
+    
+      const doc = new jsPDF()
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(20)
+      doc.text('Order List', 14, 20)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.text(`Generated ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`, 14, 28)
 
-    doc.save(`orders-${today}.pdf`)
-  }
+      let y = 40
+      const checkPage = (lines = 1) => {
+        if (y > 280 - lines * 5) { doc.addPage(); y = 20 }
+      }
 
+      grouped.forEach(({ date, items }) => {
+        checkPage(2)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(13)
+        doc.text(fmtLong(date), 14, y)
+        y += 6
+
+        items.forEach(o => {
+          checkPage(2)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(11)
+          doc.text(`${o.customer || 'Unknown'}`, 18, y)
+          y += 5
+
+          o.items.forEach(it => {
+            checkPage(1)
+            const sub = subcategories.find(s => s.id === it.subcategory_id)
+            const opt = subcategoryOptions.find(opt => opt.id === it.option_id)
+            const tag = [sub?.name, opt?.label].filter(Boolean).join(' · ')
+
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(10)
+            doc.text(`  ${it.quantity}x ${it.item_name}${tag ? ` (${tag})` : ''}`, 20, y)
+            y += 5
+
+            if (it.notes) {
+              checkPage(1)
+              doc.setFontSize(9)
+              doc.setTextColor(120, 100, 82)
+              doc.text(`    note: ${it.notes}`, 22, y)
+              doc.setTextColor(0, 0, 0)
+              y += 5
+            }
+
+            const build = it.cake_build_id ? exportCakeBuilds[it.cake_build_id] : null
+            if (build) {
+              checkPage(build.tiers.length + 2)
+              doc.setFontSize(9)
+              doc.setTextColor(120, 100, 82)
+              doc.text(`    cake design:`, 22, y)
+              y += 4
+              build.tiers.forEach(t => {
+                doc.text(`      tier ${t.tier_order}: ${t.size || '—'}${t.flavor ? `, ${t.flavor}` : ''}`, 22, y)
+                y += 4
+              })
+              if (build.toppers) { doc.text(`      toppers: ${build.toppers}`, 22, y); y += 4 }
+              if (build.message) { doc.text(`      message: "${build.message}"`, 22, y); y += 4 }
+              doc.setTextColor(0, 0, 0)
+            }
+          })
+
+          checkPage(2)
+          if (o.notes) {
+            doc.setFontSize(9)
+            doc.setTextColor(120, 100, 82)
+            doc.text(`  ${o.notes}`, 20, y)
+            doc.setTextColor(0, 0, 0)
+            y += 5
+          }
+          doc.setFontSize(10)
+          doc.text(`  ${o.status}${o.paid ? ' · Paid' : ' · Unpaid'}${o.price ? ` · $${Number(o.price).toFixed(2)}` : ''}`, 20, y)
+          y += 7
+        })
+        y += 4
+      })
+
+      doc.save(`orders-${today}.pdf`)
+    }
   return (
     <div className="ss-root">
       <style>{`
@@ -416,7 +482,6 @@ export default function SweetSchedule() {
             radial-gradient(120% 80% at 100% 0%, #F7E7E9 0%, transparent 45%),
             var(--paper);
           min-height:100%; width:100%; padding:22px 16px 60px; box-sizing:border-box;
-          overflow-x:hidden;
         }
         .ss-wrap{max-width:760px;width:100%;margin:0 auto;box-sizing:border-box;}
         .ss-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:4px;}
@@ -527,6 +592,15 @@ export default function SweetSchedule() {
           </div>
         )}
 
+        {selectMode && selectedIds.length > 0 && (
+          <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: '#33241A', borderRadius: 50, padding: '10px 10px 10px 18px', display: 'flex', alignItems: 'center', gap: 12, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+            <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>{selectedIds.length} selected</span>
+            <button onClick={markSelectedDone} style={{ background: '#6F8C57', color: '#fff', border: 'none', borderRadius: 50, padding: '8px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+              Mark Done
+            </button>
+          </div>
+        )}
+
         {viewOrder && (
           <div onClick={() => setViewOrder(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.6)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <div onClick={e => e.stopPropagation()} style={{ background: '#FFFDF8', borderRadius: 20, maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
@@ -616,13 +690,16 @@ export default function SweetSchedule() {
           </div>
         )}
 
-        <div className="ss-head">
+        <div className="ss-head" style={{ position: 'sticky', top: 56, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 8, marginBottom: 0, flexWrap: 'wrap' }}>
           <div>
-            <h1 className="ss-title">
+            <h1 className="ss-title" style={{ fontSize: 24 }}>
               {settings.bakerName ? `${settings.bakerName}'s` : "The"} <span className="em">Bake</span> Book
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button className="ss-gear" onClick={() => { setSelectMode(s => !s); setSelectedIds([]) }}>
+              {selectMode ? 'Cancel' : 'Select'}
+            </button>
             <button className="ss-gear" onClick={exportPDF}>Export PDF</button>
             <button className="ss-gear" onClick={() => setShowSettings((s) => !s)}>
               {showSettings ? "Close" : "Settings"}
@@ -949,9 +1026,18 @@ export default function SweetSchedule() {
                     <div
                       className={`ss-order ${o.status === "Done" ? "done" : ""}`}
                       key={o.id}
-                      style={{ animation: 'popIn 0.25s ease forwards' }}
-                      onClick={() => { setViewOrder(o); loadOrderSupplies(o.id); loadCakeBuilds(o) }}
+                      style={{ animation: 'popIn 0.25s ease forwards', cursor: 'pointer' }}
+                      onClick={() => selectMode ? toggleSelect(o.id) : (() => { setViewOrder(o); loadOrderSupplies(o.id); loadCakeBuilds(o) })()}
                     >
+                      {selectMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(o.id)}
+                          onChange={() => toggleSelect(o.id)}
+                          onClick={e => e.stopPropagation()}
+                          style={{ width: 20, height: 20, marginTop: 6, flexShrink: 0 }}
+                        />
+                      )}
                       <div className="qty">{o.items.reduce((sum, it) => sum + it.quantity, 0)}×</div>
                       <div className="body">
                         <div className="item">{itemSummary(o) || "—"}</div>

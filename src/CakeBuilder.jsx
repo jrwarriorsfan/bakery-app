@@ -30,6 +30,8 @@ export default function CakeBuilder({ onClose, onUse, embedded = false }) {
   const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
 
   useEffect(() => { loadTemplates() }, [])
 
@@ -66,6 +68,28 @@ export default function CakeBuilder({ onClose, onUse, embedded = false }) {
     setMessage(template.message || '')
     setNotes(template.notes || '')
     setExpandedTier(0)
+  }
+
+  const deleteTemplate = async (id) => {
+    if (!confirm('Delete this template? This cannot be undone.')) return
+    await supabase.from('cake_tiers').delete().eq('build_id', id)
+    await supabase.from('cake_builds').delete().eq('id', id)
+    setTemplates(prev => prev.filter(t => t.id !== id))
+  }
+
+  const startRename = (template) => {
+    setRenamingId(template.id)
+    setRenameValue(template.name)
+  }
+
+  const confirmRename = async (id) => {
+    if (!renameValue.trim()) return
+    const { error } = await supabase.from('cake_builds').update({ name: renameValue }).eq('id', id)
+    if (!error) {
+      setTemplates(prev => prev.map(t => t.id === id ? { ...t, name: renameValue } : t))
+    }
+    setRenamingId(null)
+    setRenameValue('')
   }
 
   const reset = () => {
@@ -150,13 +174,30 @@ export default function CakeBuilder({ onClose, onUse, embedded = false }) {
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 8 }}>Start from a template</div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {templates.map(t => (
-              <button
-                key={t.id}
-                onClick={() => loadTemplate(t)}
-                style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 50, padding: '8px 14px', fontFamily: 'inherit', fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-              >
-                {t.name}
-              </button>
+              renamingId === t.id ? (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#FFFDF8', border: '1px solid #C8643C', borderRadius: 50, paddingLeft: 12, paddingRight: 6, flexShrink: 0 }}>
+                  <input
+                    value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && confirmRename(t.id)}
+                    autoFocus
+                    style={{ fontFamily: 'inherit', fontSize: 13, border: 'none', outline: 'none', padding: '8px 0', width: 110, background: 'transparent' }}
+                  />
+                  <button onClick={() => confirmRename(t.id)} style={{ background: 'transparent', border: 'none', fontSize: 13, cursor: 'pointer', color: '#46612F', padding: '6px' }}>✓</button>
+                  <button onClick={() => { setRenamingId(null); setRenameValue('') }} style={{ background: 'transparent', border: 'none', fontSize: 13, cursor: 'pointer', color: '#7A6452', padding: '6px' }}>✕</button>
+                </div>
+              ) : (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 50, paddingLeft: 14, paddingRight: 4, flexShrink: 0 }}>
+                  <button
+                    onClick={() => loadTemplate(t)}
+                    style={{ background: 'transparent', border: 'none', fontFamily: 'inherit', fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', padding: '8px 4px' }}
+                  >
+                    {t.name}
+                  </button>
+                  <button onClick={() => startRename(t)} title="Rename" style={{ background: 'transparent', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px', color: '#7A6452' }}>✎</button>
+                  <button onClick={() => deleteTemplate(t.id)} title="Delete" style={{ background: 'transparent', border: 'none', fontSize: 13, cursor: 'pointer', padding: '6px', color: '#B5394F' }}>✕</button>
+                </div>
+              )
             ))}
           </div>
         </div>
