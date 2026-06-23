@@ -17,13 +17,24 @@ const weekEnd = () => {
 const fmtDate = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 const fmtLong = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 
+const SHORTCUTS = [
+  { key: 'recipes', label: 'Recipes', icon: '📖' },
+  { key: 'cakebuilder', label: 'Cake Builder', icon: '🎂' },
+  { key: 'customers', label: 'Customers', icon: '👥' },
+  { key: 'projects', label: 'Projects', icon: '🖼️' },
+  { key: 'notes', label: 'Notes', icon: '📝' },
+]
+
 export default function Dashboard({ onNavigate }) {
-  const [orders, setOrders] = useState([]) // each order has .items: []
+  const [orders, setOrders] = useState([])
   const [settings, setSettings] = useState({ bakerName: '', dailyCapacity: 3 })
   const [loading, setLoading] = useState(true)
 
   const [subcategories, setSubcategories] = useState([])
   const [subcategoryOptions, setSubcategoryOptions] = useState([])
+
+  const [pinnedNotes, setPinnedNotes] = useState([])
+  const [recentProject, setRecentProject] = useState(null)
 
   const [viewOrder, setViewOrder] = useState(null)
   const [viewPhoto, setViewPhoto] = useState(null)
@@ -34,12 +45,14 @@ export default function Dashboard({ onNavigate }) {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser()
 
-      const [ordersRes, itemsRes, settingsRes, subRes, optRes] = await Promise.all([
+      const [ordersRes, itemsRes, settingsRes, subRes, optRes, notesRes, projectsRes] = await Promise.all([
         supabase.from('orders').select('*').order('due_date', { ascending: true }),
         supabase.from('order_items').select('*'),
         supabase.from('settings').select('*').eq('user_id', user.id).single(),
         supabase.from('subcategories').select('*'),
         supabase.from('subcategory_options').select('*'),
+        supabase.from('notes').select('*').eq('pinned', true).order('created_at', { ascending: false }),
+        supabase.from('projects').select('*').order('created_at', { ascending: false }).limit(1),
       ])
 
       if (ordersRes.data) {
@@ -47,6 +60,7 @@ export default function Dashboard({ onNavigate }) {
           id: o.id,
           customer: o.customer_name,
           contact: o.contact,
+          customer_id: o.customer_id,
           due_date: o.due_date,
           notes: o.notes,
           status: o.status,
@@ -60,6 +74,8 @@ export default function Dashboard({ onNavigate }) {
       if (settingsRes.data) setSettings({ bakerName: settingsRes.data.baker_name || '', dailyCapacity: settingsRes.data.daily_capacity || 3 })
       if (subRes.data) setSubcategories(subRes.data)
       if (optRes.data) setSubcategoryOptions(optRes.data)
+      if (notesRes.data) setPinnedNotes(notesRes.data)
+      if (projectsRes.data && projectsRes.data.length > 0) setRecentProject(projectsRes.data[0])
 
       setLoading(false)
     })()
@@ -93,6 +109,7 @@ export default function Dashboard({ onNavigate }) {
   const today = todayStr()
   const tom = tomorrow()
   const week = weekEnd()
+  const thisMonth = new Date().toISOString().slice(0, 7)
 
   const active = orders.filter(o => o.status !== 'Done')
   const todayOrders = active.filter(o => o.due_date === today)
@@ -100,6 +117,19 @@ export default function Dashboard({ onNavigate }) {
   const weekOrders = active.filter(o => o.due_date > today && o.due_date <= week)
   const unpaid = active.filter(o => !o.paid)
   const overdue = active.filter(o => o.due_date < today)
+
+  const monthlyRevenue = orders
+    .filter(o => o.paid && o.price && o.due_date?.startsWith(thisMonth))
+    .reduce((sum, o) => sum + Number(o.price), 0)
+
+  // unique customers with unpaid orders
+  const unpaidCustomers = Array.from(
+    new Map(
+      unpaid
+        .filter(o => o.customer)
+        .map(o => [o.customer_id || o.customer, { name: o.customer, count: unpaid.filter(u => (u.customer_id || u.customer) === (o.customer_id || o.customer)).length }])
+    ).values()
+  )
 
   const itemSummary = (order) =>
     order.items.map(it => `${it.quantity}× ${it.item_name}`).join(', ')
@@ -124,11 +154,22 @@ export default function Dashboard({ onNavigate }) {
     </div>
   )
 
+  const sectionCard = (label, color, list) => list.length > 0 && (
+    <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color, marginBottom: 4 }}>{label}</div>
+      {list.map(orderRow)}
+    </div>
+  )
+
   if (loading) return <div style={{ padding: 40, fontFamily: 'Hanken Grotesk, sans-serif', color: '#7A6452' }}>Loading...</div>
 
   return (
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
+        .shortcut-tile { background: #FFFDF8; border: 1px solid #E7D9C5; border-radius: 14px; padding: '14px 10px'; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex: 1; min-width: 78px; }
+        .shortcut-tile:active { transform: scale(0.97); }
+      `}</style>
 
       <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: '0 0 4px' }}>
         {settings.bakerName ? `${settings.bakerName}'s` : 'The'} <span style={{ fontStyle: 'italic', color: '#C8643C' }}>Bake</span> Book
@@ -145,44 +186,79 @@ export default function Dashboard({ onNavigate }) {
         {statCard('Overdue', overdue.length, overdue.length > 0 ? '#B5394F' : '#6F8C57', () => onNavigate('orders'))}
       </div>
 
-      {/* today */}
-      {todayOrders.length > 0 && (
-        <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#C8643C', marginBottom: 4 }}>Due today</div>
-          {todayOrders.map(orderRow)}
-        </div>
-      )}
-
-      {/* tomorrow */}
-      {tomorrowOrders.length > 0 && (
-        <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#D9982E', marginBottom: 4 }}>Due tomorrow</div>
-          {tomorrowOrders.map(orderRow)}
-        </div>
-      )}
-
-      {/* this week */}
-      {weekOrders.length > 0 && (
-        <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 4 }}>Later this week</div>
-          {weekOrders.map(orderRow)}
-        </div>
-      )}
-
-      {/* overdue */}
-      {overdue.length > 0 && (
-        <div style={{ background: '#FBE6E6', border: '1px solid #EBC6CB', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#B5394F', marginBottom: 4 }}>Past due</div>
-          {overdue.map(orderRow)}
-        </div>
-      )}
+      {/* order sections */}
+      {sectionCard('Due today', '#C8643C', todayOrders)}
+      {sectionCard('Due tomorrow', '#D9982E', tomorrowOrders)}
+      {sectionCard('Later this week', '#7A6452', weekOrders)}
+      {sectionCard('Past due', '#B5394F', overdue)}
 
       {active.length === 0 && (
-        <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '40px 20px', textAlign: 'center', color: '#7A6452' }}>
+        <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '40px 20px', textAlign: 'center', color: '#7A6452', marginBottom: 14 }}>
           <div style={{ fontFamily: 'Fraunces, serif', fontStyle: 'italic', fontSize: 20, color: '#33241A', marginBottom: 6 }}>All clear!</div>
           <div>No active orders right now.</div>
         </div>
       )}
+
+      {/* shortcuts row */}
+      <div style={{ marginTop: 28, marginBottom: 22 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 10 }}>Jump to</div>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+          {SHORTCUTS.map(s => (
+            <div key={s.key} className="shortcut-tile" onClick={() => onNavigate(s.key)} style={{ padding: '14px 10px' }}>
+              <div style={{ fontSize: 24 }}>{s.icon}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#33241A', textAlign: 'center' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* widgets */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* revenue */}
+        <div onClick={() => onNavigate('orders')} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '16px 18px', cursor: 'pointer' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 6 }}>Revenue this month</div>
+          <div style={{ fontSize: 28, fontFamily: 'Fraunces, serif', fontWeight: 600, color: '#6F8C57' }}>${monthlyRevenue.toFixed(2)}</div>
+        </div>
+
+        {/* pinned notes */}
+        {pinnedNotes.length > 0 && (
+          <div onClick={() => onNavigate('notes')} style={{ background: '#FEF3C7', border: '1px solid #D9982E', borderRadius: 18, padding: '16px 18px', cursor: 'pointer' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#D9982E', marginBottom: 8 }}>📌 Pinned notes</div>
+            {pinnedNotes.slice(0, 3).map(n => (
+              <div key={n.id} style={{ fontSize: 14, color: '#33241A', padding: '6px 0', borderTop: '1px solid rgba(217,152,46,0.25)' }}>{n.content}</div>
+            ))}
+          </div>
+        )}
+
+        {/* customers with unpaid orders */}
+        {unpaidCustomers.length > 0 && (
+          <div onClick={() => onNavigate('customers')} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '16px 18px', cursor: 'pointer' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 8 }}>Customers with unpaid orders</div>
+            {unpaidCustomers.slice(0, 5).map((c, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '6px 0', borderTop: '1px solid #E7D9C5' }}>
+                <span>{c.name}</span>
+                <span style={{ color: '#7A6452' }}>{c.count} order{c.count > 1 ? 's' : ''}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* recent project */}
+        {recentProject && (
+          <div onClick={() => onNavigate('projects')} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, padding: 14 }}>
+            {recentProject.photo_url ? (
+              <img src={recentProject.photo_url} alt={recentProject.item_name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }} />
+            ) : (
+              <div style={{ width: 56, height: 56, borderRadius: 10, background: '#F4E9D8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🎂</div>
+            )}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 2 }}>Most recent project</div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{recentProject.item_name}</div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* full screen photo viewer */}
       {viewPhoto && (
