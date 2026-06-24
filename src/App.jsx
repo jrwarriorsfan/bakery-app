@@ -8,6 +8,7 @@ import Recipes from './Recipes.jsx'
 import Projects from './Projects.jsx'
 import Notes from './Notes.jsx'
 import CakeBuilder from './CakeBuilder.jsx'
+import Logo from './assets/Logo.jsx'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -59,16 +60,18 @@ function App() {
       `}</style>
 
       {/* top bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 150, background: '#FBF4E9', borderBottom: '1px solid #E7D9C5', display: 'flex', alignItems: 'center', padding: '14px 16px', gap: 12 }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 150, background: 'var(--card)', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '12px 16px', gap: 14, minHeight: 76 }}>
         <button
           onClick={() => setMenuOpen(s => !s)}
-          style={{ background: 'transparent', border: 'none', fontSize: 22, cursor: 'pointer', color: '#33241A', padding: 4, lineHeight: 1 }}
+          style={{ background: 'transparent', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--ink)', padding: 4, lineHeight: 1, flexShrink: 0 }}
           aria-label="Menu"
         >
           ☰
         </button>
-        <div style={{ fontFamily: 'Fraunces, serif', fontSize: 18, fontWeight: 600, color: '#33241A' }}>
-          {settingsLabel(tab)}
+        <Logo style={{ height: 62, width: 'auto', color: 'var(--ink)', flexShrink: 0 }} />
+        <div style={{ lineHeight: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 17, color: 'var(--ink-soft)', lineHeight: 1, marginBottom: 2 }}>the</div>
+          <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', lineHeight: 0.75 }}>BAKE BOOK</div>
         </div>
       </div>
 
