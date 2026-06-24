@@ -85,7 +85,7 @@ function App() {
       {menuOpen && (
         <>
           <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.4)', zIndex: 140 }} />
-          <div className="menu-dropdown" style={{ position: 'fixed', top: 58, left: 12, right: 12, background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 16, zIndex: 145, overflow: 'hidden', boxShadow: '0 12px 32px -8px rgba(110,80,50,0.3)' }}>
+          <div className="menu-dropdown" style={{ position: 'fixed', top: 100, left: 12, right: 12, background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 16, zIndex: 145, overflow: 'hidden', boxShadow: '0 12px 32px -8px rgba(110,80,50,0.3)' }}>
             {[
               { key: 'home', label: 'Home', icon: null },
               { key: 'orders', label: 'Orders', icon: null },
