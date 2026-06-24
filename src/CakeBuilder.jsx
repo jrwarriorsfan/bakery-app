@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import IconCakeBuilder from './assets/icons/IconCakeBuilder.jsx'
 
 const COLORS = [
   { name: 'Blush Pink', hex: '#F4C2C2' },
@@ -161,12 +162,15 @@ export default function CakeBuilder({ onClose, onUse, embedded = false }) {
       `}</style>
 
       {!embedded && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>🎂 Cake Builder</h1>
-          {onClose && <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7A6452' }}>✕</button>}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 8, position: 'relative', minHeight: 50 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 12, }}>
+            <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Cake Builder</h1>
+            <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '4px 0 0' }}>build something one-of-a-kind</p>
+          </div>
+          {onClose && <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7A6452', flexShrink: 0 }}>✕</button>}
+          <IconCakeBuilder style={{ width: 250, height: 250, color: 'var(--ink)', position: 'absolute', top: -65, right: -30, zIndex: 0, pointerEvents: 'none' }} />
         </div>
       )}
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 18 }}>build something one-of-a-kind</p>
 
       {/* templates row */}
       {templates.length > 0 && (
