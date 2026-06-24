@@ -119,7 +119,7 @@ export default function Recipes() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: 0 }}>
+        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
           Recipes
         </h1>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -133,7 +133,7 @@ export default function Recipes() {
       </div>
 
 {showCategories && <Categories onClose={() => setShowCategories(false)} />}
-      <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Store your recipes and track ingredient costs.</p>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>your tried and true favorites</p>
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}

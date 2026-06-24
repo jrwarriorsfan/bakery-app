@@ -65,7 +65,8 @@ export default function Notes() {
           100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
-      <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>Reminders, shopping lists, anything on your mind.</p>
+      <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: '0 0 4px', lineHeight: 0.9 }}>Notes</h1>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>jot it down before you forget</p>
 
       {/* input */}
       <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: 18, marginBottom: 24 }}>

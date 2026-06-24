@@ -740,8 +740,8 @@ export default function SweetSchedule() {
 
         <div className="ss-head" style={{ position: 'sticky', top: 100, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 10, marginBottom: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--line)', boxShadow: '0 4px 12px -8px rgba(110,80,50,0.3)' }}>
           <div>
-            <h1 className="ss-title" style={{ fontSize: 24 }}>
-              {settings.bakerName ? `${settings.bakerName}'s` : "The"} <span className="em">Bake</span> Book
+            <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
+              Orders
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -754,8 +754,8 @@ export default function SweetSchedule() {
             </button>
           </div>
         </div>
-        <p className="ss-sub">
-          Add every order here before saying yes — each day shows how full it already is.
+        <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '4px 0 18px' }}>
+          every order, all in one place
         </p>
 
         <input

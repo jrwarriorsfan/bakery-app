@@ -162,11 +162,11 @@ export default function CakeBuilder({ onClose, onUse, embedded = false }) {
 
       {!embedded && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 28, fontWeight: 600, margin: 0 }}>🎂 Cake Builder</h1>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>🎂 Cake Builder</h1>
           {onClose && <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7A6452' }}>✕</button>}
         </div>
       )}
-      <p style={{ color: '#7A6452', fontSize: 13, marginBottom: 18 }}>Design a custom cake tier by tier.</p>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 18 }}>build something one-of-a-kind</p>
 
       {/* templates row */}
       {templates.length > 0 && (
