@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import SectionDivider from './SectionDivider.jsx'
 
 const pad = (n) => String(n).padStart(2, "0")
 const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -155,7 +156,7 @@ export default function Dashboard({ onNavigate }) {
   )
 
   const sectionCard = (label, color, list) => list.length > 0 && (
-    <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
+    <div style={{ background: '#FFFCF6', border: '1px solid #D9CCB8', borderRadius: 18, padding: '14px 16px', marginBottom: 14 }}>
       <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color, marginBottom: 4 }}>{label}</div>
       {list.map(orderRow)}
     </div>
@@ -198,6 +199,8 @@ export default function Dashboard({ onNavigate }) {
           <div>No active orders right now.</div>
         </div>
       )}
+
+      <SectionDivider />
 
       {/* shortcuts row */}
       <div style={{ marginTop: 28, marginBottom: 22 }}>
