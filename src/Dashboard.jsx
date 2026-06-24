@@ -172,12 +172,12 @@ export default function Dashboard({ onNavigate }) {
         .shortcut-tile:active { transform: scale(0.97); }
       `}</style>
 
-      <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: 34, fontWeight: 600, margin: '0 0 4px' }}>
-        {settings.bakerName ? `${settings.bakerName}'s` : 'The'} <span style={{ fontStyle: 'italic', color: '#C8643C' }}>Bake</span> Book
-      </h1>
-      <p style={{ color: '#7A6452', fontSize: 14, marginBottom: 22 }}>
+      <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 44, color: 'var(--ink)', lineHeight: 0.9, marginBottom: 4 }}>
+        {settings.bakerName || 'The Bake Book'}
+      </div>
+      <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 16, color: 'var(--ink-soft)', marginBottom: 22 }}>
         {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-      </p>
+      </div>
 
       {/* stat cards */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
