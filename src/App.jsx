@@ -9,6 +9,12 @@ import Projects from './Projects.jsx'
 import Notes from './Notes.jsx'
 import CakeBuilder from './CakeBuilder.jsx'
 import Logo from './assets/Logo.jsx'
+import IconHome from './assets/icons/IconRecipes.jsx' // placeholder, see note below
+import IconRecipes from './assets/icons/IconRecipes.jsx'
+import IconCakeBuilder from './assets/icons/IconCakeBuilder.jsx'
+import IconCustomers from './assets/icons/IconCustomers.jsx'
+import IconProjects from './assets/icons/IconProjects.jsx'
+import IconNotes from './assets/icons/IconNotes.jsx'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -81,25 +87,26 @@ function App() {
           <div onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(51,36,26,0.4)', zIndex: 140 }} />
           <div className="menu-dropdown" style={{ position: 'fixed', top: 58, left: 12, right: 12, background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 16, zIndex: 145, overflow: 'hidden', boxShadow: '0 12px 32px -8px rgba(110,80,50,0.3)' }}>
             {[
-              { key: 'home', label: 'Home' },
-              { key: 'orders', label: 'Orders' },
-              { key: 'customers', label: 'Customers' },
-              { key: 'recipes', label: 'Recipes' },
-              { key: 'cakebuilder', label: 'Cake Builder' },
-              { key: 'projects', label: 'Projects' },
-              { key: 'notes', label: 'Notes' },
+              { key: 'home', label: 'Home', icon: null },
+              { key: 'orders', label: 'Orders', icon: null },
+              { key: 'customers', label: 'Customers', icon: IconCustomers },
+              { key: 'recipes', label: 'Recipes', icon: IconRecipes },
+              { key: 'cakebuilder', label: 'Cake Builder', icon: IconCakeBuilder },
+              { key: 'projects', label: 'Projects', icon: IconProjects },
+              { key: 'notes', label: 'Notes', icon: IconNotes },
             ].map(item => (
               <button
                 key={item.key}
                 onClick={() => { setTab(item.key); setMenuOpen(false) }}
                 style={{
-                  display: 'block', width: '100%', textAlign: 'left', padding: '14px 18px',
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '12px 18px',
                   fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 15,
-                  border: 'none', borderBottom: '1px solid #E7D9C5', cursor: 'pointer',
-                  background: tab === item.key ? '#FBF4E9' : 'transparent',
-                  color: tab === item.key ? '#C8643C' : '#33241A',
+                  border: 'none', borderBottom: '1px solid var(--line)', cursor: 'pointer',
+                  background: tab === item.key ? 'var(--paper)' : 'transparent',
+                  color: tab === item.key ? 'var(--terracotta)' : 'var(--ink)',
                 }}
               >
+                {item.icon && <item.icon style={{ width: 32, height: 32, color: 'inherit' }} />}
                 {item.label}
               </button>
             ))}
