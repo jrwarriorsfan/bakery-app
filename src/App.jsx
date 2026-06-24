@@ -99,14 +99,14 @@ function App() {
                 key={item.key}
                 onClick={() => { setTab(item.key); setMenuOpen(false) }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '12px 18px',
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '4px 12px',
                   fontFamily: 'Hanken Grotesk, sans-serif', fontWeight: 700, fontSize: 15,
                   border: 'none', borderBottom: '1px solid var(--line)', cursor: 'pointer',
                   background: tab === item.key ? 'var(--paper)' : 'transparent',
                   color: tab === item.key ? 'var(--terracotta)' : 'var(--ink)',
                 }}
               >
-                {item.icon && <item.icon style={{ width: 32, height: 32, color: 'inherit' }} />}
+                {item.icon && <item.icon style={{ width: 40, height: 40, color: 'inherit' }} />}
                 {item.label}
               </button>
             ))}
