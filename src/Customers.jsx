@@ -221,7 +221,7 @@ const duplicateOrder = async (order) => {
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
+        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
         <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
           {adding ? 'Cancel' : '+ Add customer'}
         </button>

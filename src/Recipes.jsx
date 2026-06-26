@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import Categories from './Categories.jsx'
+import IconRecipes from './assets/icons/IconRecipes.jsx'
 
 export default function Recipes() {
   const [recipes, setRecipes] = useState([])
@@ -118,11 +119,13 @@ export default function Recipes() {
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
-          Recipes
-        </h1>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 4, position: 'relative', minHeight: 50 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
+            Recipes
+          </h1>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button onClick={() => setShowCategories(true)} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
             Categories
           </button>
@@ -130,10 +133,11 @@ export default function Recipes() {
             {adding ? 'Cancel' : '+ Add recipe'}
           </button>
         </div>
+        <IconRecipes style={{ width: 250, height: 250, color: 'var(--ink)', position: 'absolute', top: -80, right: 350, zIndex: 0, pointerEvents: 'none' }} />
       </div>
 
-{showCategories && <Categories onClose={() => setShowCategories(false)} />}
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>your tried and true favorites</p>
+      {showCategories && <Categories onClose={() => setShowCategories(false)} />}
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 20px' }}>your tried and true favorites</p>
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}

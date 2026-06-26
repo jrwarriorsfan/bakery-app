@@ -65,7 +65,7 @@ export default function Notes() {
           100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
-      <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: '0 0 4px', lineHeight: 0.9 }}>Notes</h1>
+      <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: '0 0 4px', lineHeight: 0.9 }}>Notes</h1>
       <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>jot it down before you forget</p>
 
       {/* input */}
