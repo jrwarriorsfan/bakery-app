@@ -233,9 +233,9 @@ export default function Recipes() {
             <div key={r.id}>
               <div onClick={() => selectRecipe(r)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === r.id ? '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === r.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{r.name}</div>
-                  {r.description && <div style={{ fontSize: 13, color: '#7A6452' }}>{r.description}</div>}
-                  {r.yield_amount && <div style={{ fontSize: 13, color: '#7A6452' }}>Makes {r.yield_amount} {r.yield_unit}</div>}
+                  <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 30, color: 'var(--ink)', lineHeight: 1 }}>{r.name}</div>
+                  {r.description && <div style={{ fontFamily: 'Shadows Into Light, cursive', fontSize: 16, color: 'var(--ink-soft)', marginTop: 2 }}>{r.description}</div>}
+                  {r.yield_amount && <div style={{ fontFamily: 'Shadows Into Light, cursive', fontSize: 16, color: 'var(--ink-soft)' }}>Makes {r.yield_amount} {r.yield_unit}</div>}
                 </div>
                 <button onClick={e => { e.stopPropagation(); deleteRecipe(r.id) }} style={{ background: 'transparent', border: 'none', color: '#7A6452', cursor: 'pointer', fontSize: 16, padding: '4px 8px', borderRadius: 8 }}>✕</button>
               </div>
