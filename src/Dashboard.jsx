@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import SectionDivider from './SectionDivider.jsx'
+import IconRecipes from './assets/icons/IconRecipes.jsx'
+import IconCakeBuilder from './assets/icons/IconCakeBuilder.jsx'
+import IconCustomers from './assets/icons/IconCustomers.jsx'
+import IconProjects from './assets/icons/IconProjects.jsx'
+import IconNotes from './assets/icons/IconNotes.jsx'
 
 const pad = (n) => String(n).padStart(2, "0")
 const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -19,11 +24,11 @@ const fmtDate = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { w
 const fmtLong = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
 
 const SHORTCUTS = [
-  { key: 'recipes', label: 'Recipes', icon: '📖' },
-  { key: 'cakebuilder', label: 'Cake Builder', icon: '🎂' },
-  { key: 'customers', label: 'Customers', icon: '👥' },
-  { key: 'projects', label: 'Projects', icon: '🖼️' },
-  { key: 'notes', label: 'Notes', icon: '📝' },
+  { key: 'recipes', label: 'Recipes', icon: IconRecipes },
+  { key: 'cakebuilder', label: 'Cake Builder', icon: IconCakeBuilder },
+  { key: 'customers', label: 'Customers', icon: IconCustomers },
+  { key: 'projects', label: 'Projects', icon: IconProjects },
+  { key: 'notes', label: 'Notes', icon: IconNotes },
 ]
 
 export default function Dashboard({ onNavigate }) {
@@ -205,11 +210,16 @@ export default function Dashboard({ onNavigate }) {
       {/* shortcuts row */}
       <div style={{ marginTop: 28, marginBottom: 22 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', marginBottom: 10 }}>Jump to</div>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           {SHORTCUTS.map(s => (
-            <div key={s.key} className="shortcut-tile" onClick={() => onNavigate(s.key)} style={{ padding: '14px 10px' }}>
-              <div style={{ fontSize: 24 }}>{s.icon}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#33241A', textAlign: 'center' }}>{s.label}</div>
+            <div key={s.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+              <div
+                onClick={() => onNavigate(s.key)}
+                style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 16, width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <s.icon style={{ width: '80%', height: '80%', color: 'var(--ink)' }} />
+              </div>
+              <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink)', textAlign: 'center' }}>{s.label}</div>
             </div>
           ))}
         </div>
