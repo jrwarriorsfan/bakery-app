@@ -217,7 +217,7 @@ export default function Dashboard({ onNavigate }) {
                 onClick={() => onNavigate(s.key)}
                 style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 16, width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
-                <s.icon style={{ width: '80%', height: '80%', color: 'var(--ink)' }} />
+                <s.icon style={{ width: '100%', height: '100%', color: 'var(--ink)' }} />
               </div>
               <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink)', textAlign: 'center' }}>{s.label}</div>
             </div>
