@@ -66,9 +66,9 @@ export default function Notes() {
           100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', minHeight: 50, marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Notes</h1>
-        <IconNotes style={{ width: 230, height: 230, color: 'var(--ink)', position: 'absolute', top: -78, right: 375, zIndex: 0, pointerEvents: 'none' }} />
+      <div style={{ position: 'relative', minHeight: 60, marginBottom: 4 }}>
+        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 42, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Notes</h1>
+        <IconNotes style={{ width: 250, height: 250, color: 'var(--ink)', position: 'absolute', top: -80, right: -70, zIndex: 0, pointerEvents: 'none' }} />
       </div>
       <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 22px' }}>jot it down before you forget</p>
 

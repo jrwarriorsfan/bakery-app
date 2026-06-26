@@ -128,16 +128,18 @@ export default function Projects() {
         @media(max-width: 600px) { .modal { flex-direction: column; } .modal img { width: 100%; border-radius: 20px 20px 0 0; max-height: 260px; } .modal-details { padding: 16px; } }
         `}</style>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 4, position: 'relative', minHeight: 50 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
+            <IconProjects style={{ width: 90, height: 90, color: 'var(--ink)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          </div>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 42, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
             Projects
           </h1>
         </div>
-        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
+        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
           {adding ? 'Cancel' : '+ Add project'}
         </button>
-        <IconProjects style={{ width: 240, height: 240, color: 'var(--ink)', position: 'absolute', top: -85, right: 340, zIndex: 0, pointerEvents: 'none' }} />
       </div>
       <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 22px' }}>a look back at what you've made</p>
 

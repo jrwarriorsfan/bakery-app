@@ -221,14 +221,16 @@ const duplicateOrder = async (order) => {
         }
       `}</style>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 4, position: 'relative', minHeight: 50 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
+            <IconCustomers style={{ width: 80, height: 80, color: 'var(--ink)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+          </div>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 42, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
         </div>
-        <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
+        <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
           {adding ? 'Cancel' : '+ Add customer'}
         </button>
-        <IconCustomers style={{ width: 250, height: 250, color: 'var(--ink)', position: 'absolute', top: -90, right: 375, zIndex: 0, pointerEvents: 'none' }} />
       </div>
       <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 18px' }}>the people you bake for</p>
 
