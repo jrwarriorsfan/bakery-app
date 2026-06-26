@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import IconCustomers from './assets/icons/IconCustomers.jsx'
 
 const COLORS = [
   '#C8643C', '#B5394F', '#6F8C57', '#4A7FA5', '#8B5E9E',
@@ -220,13 +221,16 @@ const duplicateOrder = async (order) => {
         }
       `}</style>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
-        <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 4, position: 'relative', minHeight: 50 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Customers</h1>
+        </div>
+        <button onClick={() => { setAdding(s => !s); setSelected(null) }} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
           {adding ? 'Cancel' : '+ Add customer'}
         </button>
+        <IconCustomers style={{ width: 250, height: 250, color: 'var(--ink)', position: 'absolute', top: -90, right: 375, zIndex: 0, pointerEvents: 'none' }} />
       </div>
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 18 }}>the people you bake for</p>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 18px' }}>the people you bake for</p>
 
       {/* add form */}
       {adding && (
