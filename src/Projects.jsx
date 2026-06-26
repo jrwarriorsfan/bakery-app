@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
+import IconProjects from './assets/icons/IconProjects.jsx'
 
 export default function Projects() {
   const [projects, setProjects] = useState([])
@@ -127,15 +128,18 @@ export default function Projects() {
         @media(max-width: 600px) { .modal { flex-direction: column; } .modal img { width: 100%; border-radius: 20px 20px 0 0; max-height: 260px; } .modal-details { padding: 16px; } }
         `}</style>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
-          Projects
-        </h1>
-        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 4, position: 'relative', minHeight: 50 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
+            Projects
+          </h1>
+        </div>
+        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
           {adding ? 'Cancel' : '+ Add project'}
         </button>
+        <IconProjects style={{ width: 240, height: 240, color: 'var(--ink)', position: 'absolute', top: -85, right: 340, zIndex: 0, pointerEvents: 'none' }} />
       </div>
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>a look back at what you've made</p>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 22px' }}>a look back at what you've made</p>
 
       {adding && (
         <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: 18, marginBottom: 24 }}>
