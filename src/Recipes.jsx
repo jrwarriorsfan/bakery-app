@@ -129,10 +129,10 @@ export default function Recipes() {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => setShowCategories(true)} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '10px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          <button onClick={() => setShowCategories(true)} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '8px 16px', fontFamily: 'Amatic SC, sans-serif', fontWeight: 1000, fontSize: 24, lineHeight: 1, cursor: 'pointer' }}>
             Categories
           </button>
-          <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '8px 16px', fontFamily: 'Amatic SC, sans-serif', fontWeight: 1000, fontSize: 24, lineHeight: 1, cursor: 'pointer' }}>
             {adding ? 'Cancel' : '+ Add recipe'}
           </button>
         </div>
@@ -144,7 +144,7 @@ export default function Recipes() {
         value={search}
         onChange={e => setSearch(e.target.value)}
         placeholder="Search recipes..."
-        style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: 15, border: '1px solid #E7D9C5', borderRadius: 12, padding: '10px 14px', outline: 'none', background: '#FFFDF8', color: '#33241A', marginBottom: 14 }}
+        style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'Shadows Into Light, cursive', fontSize: 20, fontWeight: 500, lineHeight: 1, border: '1px solid #E7D9C5', borderRadius: 12, padding: '8px 14px', outline: 'none', background: '#FFFDF8', color: '#33241A', marginBottom: 14 }}
       />
 
       {adding && (
@@ -233,7 +233,7 @@ export default function Recipes() {
             <div key={r.id}>
               <div onClick={() => selectRecipe(r)} style={{ background: '#FFFDF8', border: `1px solid ${selected?.id === r.id ? '#C8643C' : '#E7D9C5'}`, borderRadius: selected?.id === r.id ? '18px 18px 0 0' : 18, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 30, color: 'var(--ink)', lineHeight: 1 }}>{r.name}</div>
+                  <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 1000, fontSize: 30, color: 'var(--ink)', lineHeight: 1 }}>{r.name}</div>
                   {r.description && <div style={{ fontFamily: 'Shadows Into Light, cursive', fontSize: 16, color: 'var(--ink-soft)', marginTop: 2 }}>{r.description}</div>}
                   {r.yield_amount && <div style={{ fontFamily: 'Shadows Into Light, cursive', fontSize: 16, color: 'var(--ink-soft)' }}>Makes {r.yield_amount} {r.yield_unit}</div>}
                 </div>
