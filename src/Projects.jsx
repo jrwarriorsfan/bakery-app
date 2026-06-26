@@ -137,7 +137,7 @@ export default function Projects() {
             Projects
           </h1>
         </div>
-        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '10px 18px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+        <button onClick={() => setAdding(s => !s)} style={{ background: '#C8643C', color: '#fff', border: 'none', borderRadius: 11, padding: '9px 10px', fontFamily: 'Amatic SC, sans-serif', fontWeight: 1000, fontSize: 28, lineHeight: 1, cursor: 'pointer' }}>
           {adding ? 'Cancel' : '+ Add project'}
         </button>
       </div>
