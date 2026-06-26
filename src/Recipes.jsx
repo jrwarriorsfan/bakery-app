@@ -119,16 +119,16 @@ export default function Recipes() {
     <div style={{ fontFamily: 'Hanken Grotesk, sans-serif', padding: '22px 16px 60px', maxWidth: 760, margin: '0 auto' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');`}</style>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
           <div style={{ width: 40, height: 40, position: 'relative', flexShrink: 0 }}>
-            <IconRecipes style={{ width: 70, height: 70, color: 'var(--ink)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+            <IconRecipes style={{ width: 100, height: 100, color: 'var(--ink)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
           </div>
-          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 42, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
+          <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
             Recipes
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0, marginTop: 0 }}>
           <button onClick={() => setShowCategories(true)} style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', color: '#33241A', borderRadius: 11, padding: '8px 16px', fontFamily: 'Amatic SC, sans-serif', fontWeight: 1000, fontSize: 24, lineHeight: 1, cursor: 'pointer' }}>
             Categories
           </button>
@@ -139,7 +139,7 @@ export default function Recipes() {
       </div>
 
       {showCategories && <Categories onClose={() => setShowCategories(false)} />}
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 20px' }}>your tried and true favorites</p>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '-40px 0 22px' }}>your tried and true favorites</p>
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}
