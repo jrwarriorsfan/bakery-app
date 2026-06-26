@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from './supabase'
 import jsPDF from 'jspdf'
 import CakeBuilder from './CakeBuilder.jsx'
+import IconOrders from './assets/icons/IconOrders.jsx'
 
 // ---- helpers -------------------------------------------------------------
 const pad = (n) => String(n).padStart(2, "0");
@@ -738,8 +739,11 @@ export default function SweetSchedule() {
           </div>
         )}
 
-        <div className="ss-head" style={{ position: 'sticky', top: 100, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 10, marginBottom: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--line)', boxShadow: '0 4px 12px -8px rgba(110,80,50,0.3)' }}>
-          <div>
+        <div className="ss-head" style={{ position: 'sticky', top: 100, zIndex: 120, background: 'var(--paper)', paddingTop: 8, paddingBottom: 10, marginBottom: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, flexWrap: 'wrap', borderBottom: '1px solid var(--line)', boxShadow: '0 4px 12px -8px rgba(110,80,50,0.3)', position: 'sticky' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, position: 'relative', flexShrink: 0 }}>
+              <IconOrders style={{ width: 60, height: 60, color: 'var(--ink)', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+            </div>
             <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>
               Orders
             </h1>

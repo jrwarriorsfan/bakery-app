@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import IconNotes from './assets/icons/IconNotes.jsx'
 
 export default function Notes() {
   const [notes, setNotes] = useState([])
@@ -65,8 +66,11 @@ export default function Notes() {
           100% { opacity: 1; transform: scale(1); }
         }
       `}</style>
-      <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: '0 0 4px', lineHeight: 0.9 }}>Notes</h1>
-      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', marginBottom: 22 }}>jot it down before you forget</p>
+      <div style={{ position: 'relative', minHeight: 50, marginBottom: 4 }}>
+        <h1 style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 48, color: 'var(--ink)', margin: 0, lineHeight: 0.9 }}>Notes</h1>
+        <IconNotes style={{ width: 230, height: 230, color: 'var(--ink)', position: 'absolute', top: -78, right: 375, zIndex: 0, pointerEvents: 'none' }} />
+      </div>
+      <p style={{ fontFamily: 'Pacifico, cursive', fontSize: 14, color: 'var(--ink-soft)', margin: '0 0 22px' }}>jot it down before you forget</p>
 
       {/* input */}
       <div style={{ background: '#FFFDF8', border: '1px solid #E7D9C5', borderRadius: 18, padding: 18, marginBottom: 24 }}>
