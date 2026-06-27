@@ -74,10 +74,15 @@ function App() {
         >
           ☰
         </button>
-        <Logo style={{ height: 62, width: 'auto', color: 'var(--ink)', flexShrink: 0 }} />
-        <div style={{ lineHeight: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 17, color: 'var(--ink-soft)', lineHeight: 1, marginBottom: 2 }}>the</div>
-          <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', lineHeight: 0.75 }}>BAKE BOOK</div>
+        <div
+          onClick={() => setTab('home')}
+          style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
+        >
+          <Logo style={{ height: 62, width: 'auto', color: 'var(--ink)', flexShrink: 0 }} />
+          <div style={{ lineHeight: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'Pacifico, cursive', fontSize: 17, color: 'var(--ink-soft)', lineHeight: 1, marginBottom: 2 }}>the</div>
+            <div style={{ fontFamily: 'Amatic SC, sans-serif', fontWeight: 700, fontSize: 38, color: 'var(--ink)', lineHeight: 0.75 }}>BAKE BOOK</div>
+          </div>
         </div>
       </div>
 
