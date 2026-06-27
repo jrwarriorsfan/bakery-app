@@ -197,23 +197,42 @@ export default function Recipes() {
           <div style={{ marginTop: 18 }}>
             <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#7A6452', display: 'block', marginBottom: 10 }}>Ingredients</label>
             {ingredientRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 8, marginBottom: 8, alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
-                <input value={row.ingredient_name} onChange={e => updateIngredientRow(i, 'ingredient_name', e.target.value)} placeholder="Butter" style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
-                <input type="number" value={row.quantity} onChange={e => updateIngredientRow(i, 'quantity', e.target.value)} placeholder="1" style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
-                <select value={row.unit} onChange={e => updateIngredientRow(i, 'unit', e.target.value)} style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', color: '#33241A', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
-                  <option value=''>unit</option>
-                  {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-                <input type="number" value={row.unit_price} onChange={e => updateIngredientRow(i, 'unit_price', e.target.value)} placeholder="$0.00" style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
-                <button onClick={() => removeIngredientRow(i)} style={{ background: 'transparent', border: 'none', color: '#7A6452', cursor: 'pointer', fontSize: 16, padding: '4px 6px' }}>✕</button>
+              <div key={i} style={{ border: '1px solid #E7D9C5', borderRadius: 11, padding: 10, marginBottom: 8 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                  <input
+                    value={row.ingredient_name}
+                    onChange={e => updateIngredientRow(i, 'ingredient_name', e.target.value)}
+                    placeholder="Ingredient name (e.g. Butter)"
+                    style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                  />
+                  <button onClick={() => removeIngredientRow(i)} style={{ background: 'transparent', border: 'none', color: '#7A6452', cursor: 'pointer', fontSize: 16, padding: '4px 6px', flexShrink: 0 }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                  <input
+                    type="number"
+                    value={row.quantity}
+                    onChange={e => updateIngredientRow(i, 'quantity', e.target.value)}
+                    placeholder="Qty"
+                    style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                  />
+                  <select
+                    value={row.unit}
+                    onChange={e => updateIngredientRow(i, 'unit', e.target.value)}
+                    style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', color: '#33241A', width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                  >
+                    <option value=''>unit</option>
+                    {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                  <input
+                    type="number"
+                    value={row.unit_price}
+                    onChange={e => updateIngredientRow(i, 'unit_price', e.target.value)}
+                    placeholder="$/unit"
+                    style={{ fontFamily: 'inherit', fontSize: 14, border: '1px solid #E7D9C5', borderRadius: 9, padding: '8px 10px', outline: 'none', width: '100%', minWidth: 0, boxSizing: 'border-box' }}
+                  />
+                </div>
               </div>
             ))}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: '#7A6452', padding: '0 10px' }}>Ingredient</span>
-              <span style={{ fontSize: 11, color: '#7A6452', padding: '0 10px' }}>Qty</span>
-              <span style={{ fontSize: 11, color: '#7A6452', padding: '0 10px' }}>Unit</span>
-              <span style={{ fontSize: 11, color: '#7A6452', padding: '0 10px' }}>Cost/unit $</span>
-            </div>
             <button onClick={addIngredientRow} style={{ background: 'transparent', border: '1px dashed #E7D9C5', borderRadius: 9, padding: '8px 14px', fontFamily: 'inherit', fontSize: 13, color: '#7A6452', cursor: 'pointer', marginTop: 4 }}>
               + Add ingredient
             </button>
